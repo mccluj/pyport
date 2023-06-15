@@ -2,6 +2,7 @@ import pandas as pd
 from math import log, sqrt, exp
 from scipy.stats import norm
 from pyport.lib.black_scholes import black_scholes
+from pyport.utils.misc import string_to_float
 
 
 class Option:
@@ -35,7 +36,7 @@ class Option:
             raise RuntimeError('Either expiry or tenor needed for creation')
         exercise = config.get('exercise', 'european')
         option_type = config['option_type']
-        object = cls(underlyer, strike, exercise, option_type, exercise)
+        object = cls(underlyer, strike, expiry, option_type, exercise)
         object.initial_valuation = object.reprice(market)
         return object
         
@@ -54,7 +55,7 @@ class Option:
         spot = market['spot_prices'][self.underlyer]
         volatility = market['volatilities'][self.underlyer]
         dividend_rate = market['dividend_rates'][self.underlyer]
-        discount = market['discount_rates'][date]
+        discount = market['discount_rates']
         return self.unit_reprice(date, spot, volatility, discount, dividend_rate)
 
 
