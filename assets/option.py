@@ -72,24 +72,3 @@ class OptionPricingResult:
         self.theta = theta
         self.vega = vega
         self.rho = rho
-
-
-# Usage example
-if __name__ == '__main__':
-    market = {
-        'date': pd.Timestamp('2023-06-14'),
-        'spot_prices': {'AAPL': 150.0, 'GOOG': 2500.0},
-        'volatilities': {'AAPL': 0.2, 'GOOG': 0.3},
-        'dividend_rates': {'AAPL': 0.02, 'GOOG': 0.0},
-        'discount_rates': {pd.Timestamp('2023-06-14'): 0.05}
-    }
-
-    option = Option('AAPL', 160.0, pd.Timestamp('2023-12-31'), 'put', 'european')
-    result = option.reprice(market)
-
-    print("Option Price:", result.price)
-    print("Delta:", result.delta)
-    print("Gamma:", result.gamma)
-    print("Theta:", result.theta)
-    print("Vega:", result.vega)
-    print("Rho:", result.rho)
