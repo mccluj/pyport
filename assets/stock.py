@@ -1,4 +1,5 @@
 """Stock asset class"""
+import pandas as pd
 from pyport import Asset, PricingResult
 
 
@@ -15,4 +16,8 @@ class Stock(Asset):
         price = self.unit_reprice(spot)
         return PricingResult(self.name, price, market['date'])
 
-
+    def compute_accrued_income(self, market, acquisition_date):
+        dividends = market.get('dividends', {}).get(self.name, pd.Series(dtype=float))
+        mask = (dividends.index > acquisition_date) & (dividends.index <= market['date'])
+        return dividends.loc[mask].sum()
+        
