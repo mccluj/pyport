@@ -8,10 +8,11 @@ import pandas as pd
 
 
 class Holding:
-    def __init__(self, asset, acquisition_date, acquisition_price):
+    def __init__(self, asset, acquisition_date, acquisition_price, quantity):
         self.asset = asset
         self.acquisition_date = pd.Timestamp(acquisition_date)
         self.acquisition_price = acquisition_price
+        self.quantity = quantity
         self.accrued_income = 0
 
     def reprice(self, market):
