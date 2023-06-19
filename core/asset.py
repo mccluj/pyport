@@ -13,7 +13,6 @@ class Asset(ABC):
     @abstractmethod
     def unit_reprice(self, *_args, **_kwargs):
         """Reprice class using kwargs calling parameters"""
-        pass
 
     @abstractmethod
     def reprice(self, market):
