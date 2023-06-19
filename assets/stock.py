@@ -8,9 +8,11 @@ class Stock(Asset):
         self.price = None
 
     def unit_reprice(self, spot):
-        return PricingResult(self.name, spot)
+        return spot
 
     def reprice(self, market):
         spot = market['spot_prices'][self.name]
-        return self.unit_reprice(spot)
+        price = self.unit_reprice(spot)
+        return PricingResult(self.name, price, market['date'])
+
 

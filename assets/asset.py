@@ -1,5 +1,6 @@
 """Base class for assets"""
 from abc import ABC, abstractmethod
+import re
 import pandas as pd
 
 
@@ -40,4 +41,10 @@ class PricingResult:
     def __init__(self, name, price, date=None, **kwargs):
         self.name = name
         self.price = price
-        self.date = date
+        self.date = pd.Timestamp(date)
+
+    def to_string(self):
+        attributes = [f'{attr} {getattr(self, attr)}' for attr in dir(self)
+                      if not callable(getattr(self, attr))
+                      and re.match(r'^[A-Za-z]', attr)]
+        return '\n'.join(attributes)
