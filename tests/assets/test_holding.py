@@ -21,10 +21,8 @@ class TestHolding(unittest.TestCase):
         assert holding.asset.name == self.stock.name
 
     def test_reprice_stock_no_divs(self):
-        date = '6/1/2023'
-        price = 100
-        holding = Holding(self.stock, date, price)
-        result = holding.reprice(self.market)
+        assert self.holding.accrued_income == 0
+        result = self.holding.reprice(self.market)
         assert result.accrued_income == 0
 
     def test_reprice_stock_divs(self):
