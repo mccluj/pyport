@@ -7,8 +7,7 @@ class Holdings:
     def __init__(self):
         self.holdings = []
 
-    def add_holding(self, asset, acquistion_date, acquisition_price, quantity):
-        holding = Holding(asset, acquistion_date, acquisition_price, quantity)
+    def add_holding(self, holding):
         self.holdings.append(holding)
 
     def remove_holding(self, holding):
