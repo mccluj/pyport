@@ -1,3 +1,3 @@
-from pyport.assets.asset import Asset, PricingResult
-from pyport.assets.stock import Stock
-from pyport.assets.holding import Holding
+from pyport.core.asset import Asset, PricingResult
+from pyport.core.stock import Stock
+from pyport.core.holding import Holding

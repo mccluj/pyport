@@ -1,5 +1,5 @@
 import pytest
-from pyport.assets.asset import Asset
+from pyport.core.asset import Asset
 
 
 def test_asset_creation_fails():
