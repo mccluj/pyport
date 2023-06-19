@@ -17,6 +17,6 @@ class TestStock(unittest.TestCase):
         stock = Stock('SPY')
         spot = 40
         result = stock.unit_reprice(spot)
-        self.assertAlmostEqual(result.price, spot)
+        self.assertAlmostEqual(result, spot)
 
     
