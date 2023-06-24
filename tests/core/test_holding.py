@@ -11,7 +11,10 @@ class TestHolding(unittest.TestCase):
     def setUp(self):
         self.stock = Stock('IBM')
         self.date = '4/1/2023'
-        self.market = {'spot_prices': {'IBM': 120}, 'date': self.date}
+        dividends = pd.Series(1, pd.date_range('1/1/2023', periods=4, freq='BM'))
+        self.market = {'spot_prices': {'IBM': 120},
+                       'date': self.date,
+                       'dividends': {'IBM': dividends}}
         self.holding = Holding(self.stock, acquisition_date='1/1/2023', acquisition_price=100,
                                quantity=20)
 
@@ -25,18 +28,29 @@ class TestHolding(unittest.TestCase):
         assert holding.asset.name == self.stock.name
         assert holding.quantity == quantity
 
-    def test_reprice_stock_no_divs(self):
+    def test_update_valuations_with_no_divs(self):
+        market = self.market
+        del market['dividends']
+        self.holding.update_valuation(market)
+        valuation = self.holding.get_current_valuation()
         expected = HoldingValuation(self.date, 120, 0, 20)
-        valuation = self.holding.get_current_valuation(self.market)
         self.assertEqual(expected, valuation)
         if SHOW:
             print(valuation.to_string())
 
-    def test_reprice_stock_divs(self):
-        dividends = pd.Series(1, pd.date_range('1/1/2023', periods=4, freq='BM'))
-        market = {**self.market, 'dividends': {'IBM': dividends}, 'date': '4/1/2023'}
+    def test_update_valuations_with_divs(self):
+        self.holding.update_valuation(self.market)
+        valuation = self.holding.get_current_valuation()
         expected = HoldingValuation(self.date, 120, 3, 20)
-        valuation = self.holding.get_current_valuation(market)
         self.assertEqual(expected, valuation)
         if SHOW:
             print(valuation.to_string())
+
+    def test_update_valuations_not_inplace(self):
+        result = self.holding.update_valuation(self.market, inplace=False)
+        expected = HoldingValuation(self.date, 120, 3, 20)
+        self.assertEqual(expected, result.valuation)
+
+    def test_update_valuations_inplace(self):
+        result = self.holding.update_valuation(self.market, inplace=True)
+        self.assertEqual(result, None)

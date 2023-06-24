@@ -21,7 +21,7 @@ class Stock(Asset):
     def compute_accrued_income(self, market, acquisition_date):
         """Accrue dividends after acquisition date and on or before market date."""
         dividends = market.get('dividends', {}).get(self.name)
-        if dividends:
+        if dividends is not None:
             mask = (dividends.index > acquisition_date) & (dividends.index <= market['date'])
             return dividends.loc[mask].sum()
         else:
