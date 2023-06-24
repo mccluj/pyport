@@ -20,9 +20,12 @@ class Stock(Asset):
 
     def compute_accrued_income(self, market, acquisition_date):
         """Accrue dividends after acquisition date and on or before market date."""
-        dividends = market.get('dividends', {}).get(self.name, pd.Series(dtype=float))
-        mask = (dividends.index > acquisition_date) & (dividends.index <= market['date'])
-        return dividends.loc[mask].sum()
+        dividends = market.get('dividends', {}).get(self.name)
+        if dividends:
+            mask = (dividends.index > acquisition_date) & (dividends.index <= market['date'])
+            return dividends.loc[mask].sum()
+        else:
+            return 0
 
 
 def parse_args():

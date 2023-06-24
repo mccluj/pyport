@@ -25,3 +25,8 @@ class TestStock(unittest.TestCase):
         income = self.stock.compute_accrued_income(market, acquisition_date='1/1/2023')
         assert income == 3
 
+    def test_accrued_income_no_dividends(self):
+        dividends = None
+        market = {**self.market, 'dividends': {'SPY': dividends}, 'date': '4/1/2023'}
+        income = self.stock.compute_accrued_income(market, acquisition_date='1/1/2023')
+        assert income == 0
