@@ -28,29 +28,29 @@ class TestHolding(unittest.TestCase):
         assert holding.asset.name == self.stock.name
         assert holding.quantity == quantity
 
-    def test_update_valuations_with_no_divs(self):
+    def test_reprices_with_no_divs(self):
         market = self.market
         del market['dividends']
-        self.holding.update_valuation(market)
-        valuation = self.holding.get_current_valuation()
+        self.holding.reprice(market)
+        valuation = self.holding.valuation
         expected = HoldingValuation(self.date, 120, 0, 20)
         self.assertEqual(expected, valuation)
         if SHOW:
             print(valuation.to_string())
 
-    def test_update_valuations_with_divs(self):
-        self.holding.update_valuation(self.market)
-        valuation = self.holding.get_current_valuation()
+    def test_reprices_with_divs(self):
+        self.holding.reprice(self.market)
+        valuation = self.holding.valuation
         expected = HoldingValuation(self.date, 120, 3, 20)
         self.assertEqual(expected, valuation)
         if SHOW:
             print(valuation.to_string())
 
-    def test_update_valuations_not_inplace(self):
-        result = self.holding.update_valuation(self.market, inplace=False)
+    def test_reprices_not_inplace(self):
+        result = self.holding.reprice(self.market, inplace=False)
         expected = HoldingValuation(self.date, 120, 3, 20)
         self.assertEqual(expected, result.valuation)
 
-    def test_update_valuations_inplace(self):
-        result = self.holding.update_valuation(self.market, inplace=True)
+    def test_reprices_inplace(self):
+        result = self.holding.reprice(self.market, inplace=True)
         self.assertEqual(result, None)

@@ -18,22 +18,16 @@ class Holding:
         self.quantity = quantity
         self.valuation = None
 
-    def _update_valuation(self, market):
-        """Update valuation on this holding."""
+    def reprice(self, market, inplace=True):
         accrued_income = self.asset.compute_accrued_income(market, self.acquisition_date)
         price = self.asset.reprice(market).price
-        self.valuation = HoldingValuation(market['date'], price, accrued_income, self.quantity)
-        
-    def update_valuation(self, market, inplace=True):
+        valuation = HoldingValuation(market['date'], price, accrued_income, self.quantity)
         if inplace:
-            self._update_valuation(market)
+            self.valuation = valuation
         else:
             instance = copy.copy(self)
-            instance._update_valuation(market)
+            instance.valuation = valuation
             return instance
-
-    def get_current_valuation(self):
-        return self.valuation
 
     def to_string(self, indent=0):
         attributes = [f'asset: {self.asset.to_string(indent)}',
