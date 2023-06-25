@@ -18,9 +18,14 @@ class Holding:
         self.quantity = quantity
         self.valuation = None
 
-    def reprice(self, market, inplace=True):
-        accrued_income = self.asset.compute_accrued_income(market, self.acquisition_date)
-        price = self.asset.reprice(market).price
+    def reprice(self, context, inplace=True):
+        """
+        :param context: dict
+        """
+        asset = context['assets'][self.asset]
+        market = context['market']
+        accrued_income = asset.compute_accrued_income(market, self.acquisition_date)
+        price = asset.reprice(market).price
         valuation = HoldingValuation(market['date'], price, accrued_income, self.quantity)
         if inplace:
             self.valuation = valuation
@@ -30,18 +35,18 @@ class Holding:
             return instance
 
     def to_string(self, indent=0):
-        attributes = [f'asset: {self.asset.to_string(indent)}',
-                      f'acquisition_date: {self.acquisition_date}',
-                      f'acquisition_price: {self.acquisition_price}',
-                      f'quantity: {self.quantity}',
-                      ]
-        if self.valuation is not None:
-            attributes.append(f'valuation:\n{self.valuation.to_string()}')
-        else:
-            attributes.append(f'valuation:\n{self.valuation}')
-        return '\n'.join(attributes)
+        return self.holding.to_string()
 
+    @property
+    def holding(self):
+        attributes = pd.Series({'symbol': self.asset,
+                                'acquisition_date': self.acquisition_date,
+                                'acquisition_price': self.acquisition_price,
+                                'quantity': self.quantity})
+        data = pd.concat([attributes, self.valuation],
+                         axis=0, keys=['holding', 'valuation'])
         
+
 class HoldingValuation:
     def __init__(self, date, asset_price, asset_income, quantity):
         self.date = pd.Timestamp(date)
