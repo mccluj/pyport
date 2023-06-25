@@ -11,11 +11,7 @@ class Asset(ABC):
         self.name = name
 
     @abstractmethod
-    def unit_reprice(self, *_args, **_kwargs):
-        """Reprice class using kwargs calling parameters"""
-
-    @abstractmethod
-    def reprice(self, market):
+    def reprice(self, market) -> None:
         """Reprice class using data found in market object
         :param market: dict
         """
@@ -24,7 +20,6 @@ class Asset(ABC):
         """Use the market and other parameters to initialize class
         :param market: dict
         """
-        self.reprice(market)
         return self
 
     def compute_accrued_income(self, market, initial_date):
@@ -36,14 +31,11 @@ class Asset(ABC):
         return f'{padding}{_class}({self.name}): price={self.price}'
 
 
-class PricingResult:
+class AssetPrice:
     def __init__(self, name, price, date=None, **kwargs):
         self.name = name
         self.price = price
         self.date = pd.Timestamp(date)
 
     def to_string(self):
-        attributes = [f'{attr} {getattr(self, attr)}' for attr in dir(self)
-                      if not callable(getattr(self, attr))
-                      and re.match(r'^[A-Za-z]', attr)]
-        return '\n'.join(attributes)
+        return f'Asset({self.name}, {self.date:%Y-%m-%d}, {self.price}'

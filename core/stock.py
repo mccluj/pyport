@@ -2,7 +2,7 @@
 import sys
 import argparse
 import pandas as pd
-from pyport import Asset, PricingResult
+from pyport import Asset, AssetPrice
 
 
 class Stock(Asset):
@@ -10,13 +10,10 @@ class Stock(Asset):
         super().__init__(name)
         self.price = None
 
-    def unit_reprice(self, spot):
-        return spot
-
     def reprice(self, market):
-        spot = market['spot_prices'][self.name]
-        price = self.unit_reprice(spot)
-        return PricingResult(self.name, price, market['date'])
+        date = market['date']
+        price = market['spot_prices'][self.name]
+        return AssetPrice(date, price)
 
     def compute_accrued_income(self, market, acquisition_date):
         """Accrue dividends after acquisition date and on or before market date."""
