@@ -16,8 +16,7 @@ class Holding:
         self.acquisition_date = pd.Timestamp(acquisition_date)
         self.acquisition_price = acquisition_price
         self.quantity = quantity
-        self.valuation = None
-        self.mark(acquisition_date, acquisition_price)
+        self.valuation = HoldingValuation(acquisition_date, acquisition_price, 0, quantity)
 
     def mark(self, date, asset_price, inplace=True):
         """Mark the holding, with possibly non market prices. Asset income unchanged."""
