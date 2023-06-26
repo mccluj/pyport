@@ -21,5 +21,5 @@ class TestPortfolio(unittest.TestCase):
         assert portfolio.cash == 8000
         assert portfolio.holdings.shape[0] == 1
 
-    def test_to_string():
-        _ = self.portfolio.to_string()
+    def test_to_string(self):
+        _ = self.initial_portfolio.to_string()

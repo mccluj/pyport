@@ -17,6 +17,7 @@ class Holding:
         self.acquisition_price = acquisition_price
         self.quantity = quantity
         self.valuation = None
+        self.mark(acquisition_date, acquisition_price)
 
     def mark(self, date, asset_price, inplace=True):
         """Mark the holding, with possibly non market prices. Asset income unchanged."""
@@ -49,7 +50,7 @@ class Holding:
             return instance
 
     def to_string(self, indent=0):
-        return self.holding.to_string()
+        return self.to_series().to_string()
 
     @property
     def attributes(self):

@@ -26,6 +26,15 @@ class TestHolding(unittest.TestCase):
         assert self.holding.acquisition_price == 100
         assert self.holding.quantity == 20
 
+    def test_to_string(self):
+        _ = self.holding.to_string()
+
+    def test_mark(self):
+        self.holding.mark('2/1/2023', 200, inplace=False)
+        assert self.holding.valuation.holding_value == 100 * 20
+        self.holding.mark('2/1/2023', 200, inplace=True)
+        assert self.holding.valuation.holding_value == 200 * 20
+        
     def test_reprices_with_no_divs(self):
         del self.context['market']['dividends']
         self.holding.reprice(self.context)
@@ -65,7 +74,11 @@ class TestHolding(unittest.TestCase):
                                 'acquisition_price': 100,
                                 'quantity': 20})
         # Without valuation.
-        expected = attributes
+        valuation = HoldingValuation(attributes.acquisition_date,
+                                     attributes.acquisition_price,
+                                     0,
+                                     attributes.quantity).to_series()
+        expected = pd.concat([attributes, valuation])
         assert_series_equal(self.holding.to_series(), expected)
         self.holding.reprice(self.context, inplace=True)
         # With valuation.
