@@ -12,7 +12,7 @@ class Portfolio:
     """
     def __init__(self, initial_cash=0):
         self.cash = initial_cash
-        self.holdings = None
+        self.holdings = pd.DataFrame()
         self.target = None
         self.trades = None
 
@@ -22,8 +22,24 @@ class Portfolio:
         
     @property
     def aum(self):
-        if self.holdings is not None:
-            return self.cash + self.holdings.value.sum()
-        else:
+        if self.holdings.empty:
             return self.cash
+        else:
+            return self.cash + self.holdings.value.sum()
 
+    def add_holding(self, holding):
+        self.cash -= holding.quantity * holding.acquisition_price
+        if holding.valuation is None:
+            holding.mark(holding.acquisition_date, holding.acquisition_price)
+            
+        holding = holding.to_series()
+        if self.holdings.empty:
+            self.holdings = holding.to_frame().T
+        else:
+            self.holdings = pd.concat([self.holdings, holding], axis=0)
+
+    def to_string(self):
+        strings = [f'cash: {self.cash}',
+                   self.holdings.to_string(),
+                   ]
+        return '\n'.join(strings)

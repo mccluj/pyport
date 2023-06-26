@@ -18,6 +18,20 @@ class Holding:
         self.quantity = quantity
         self.valuation = None
 
+    def mark(self, date, asset_price, inplace=True):
+        """Mark the holding, with possibly non market prices. Asset income unchanged."""
+        if self.valuation is None:
+            asset_income = 0
+        else:
+            asset_income = self.valuation.asset_income
+        valuation = HoldingValuation(date, asset_price, asset_income, self.quantity)
+        if inplace:
+            self.valuation = valuation
+        else:
+            instance = copy.copy(self)
+            instance.valuation = valuation
+            return instance
+
     def reprice(self, context, inplace=True):
         """
         :param context: dict
