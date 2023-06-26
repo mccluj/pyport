@@ -12,13 +12,18 @@ class Portfolio:
     """
     def __init__(self, initial_cash=0):
         self.cash = initial_cash
-        self.holdings = pd.DataFrame(columns=['symbol', 'value'])
+        self.holdings = None
         self.target = None
         self.trades = None
 
     def reprice(self, market):
-        self.holdings.apply(lambda x: x.reprice(market))
+        if self.holdings is not None:
+            self.holdings.apply(lambda x: x.reprice(market))
         
     @property
     def aum(self):
-        return self.cash + self.holdings.value.sum()
+        if self.holdings is not None:
+            return self.cash + self.holdings.value.sum()
+        else:
+            return self.cash
+
