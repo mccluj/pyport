@@ -51,3 +51,25 @@ class TestHolding(unittest.TestCase):
     def test_reprices_inplace(self):
         result = self.holding.reprice(self.context, inplace=True)
         self.assertEqual(result, None)
+
+    def test_attributes(self):
+        expected = pd.Series({'symbol': 'IBM',
+                              'acquisition_date': pd.Timestamp('1/1/2023'),
+                              'acquisition_price': 100,
+                              'quantity': 20})
+        assert_series_equal(self.holding.attributes, expected)
+
+    def test_to_series(self):
+        attributes = pd.Series({'symbol': 'IBM',
+                                'acquisition_date': pd.Timestamp('1/1/2023'),
+                                'acquisition_price': 100,
+                                'quantity': 20})
+        # Without valuation.
+        expected = attributes
+        assert_series_equal(self.holding.to_series(), expected)
+        self.holding.reprice(self.context, inplace=True)
+        # With valuation.
+        valuation = HoldingValuation(self.date, 120, 3, 20).to_series()
+        expected = pd.concat([attributes, valuation])
+        assert_series_equal(self.holding.to_series(), expected)
+

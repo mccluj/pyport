@@ -38,13 +38,18 @@ class Holding:
         return self.holding.to_string()
 
     @property
-    def holding(self):
-        attributes = pd.Series({'symbol': self.asset,
-                                'acquisition_date': self.acquisition_date,
-                                'acquisition_price': self.acquisition_price,
-                                'quantity': self.quantity})
-        data = pd.concat([attributes, self.valuation],
-                         axis=0, keys=['holding', 'valuation'])
+    def attributes(self):
+        return pd.Series({'symbol': self.asset,
+                          'acquisition_date': self.acquisition_date,
+                          'acquisition_price': self.acquisition_price,
+                          'quantity': self.quantity})
+
+    def to_series(self):
+        if self.valuation is not None:
+            return pd.concat([self.attributes, self.valuation.to_series()])
+        else:
+            return self.attributes
+            
         
 
 class HoldingValuation:
@@ -61,6 +66,13 @@ class HoldingValuation:
                 (self.asset_income == other.asset_income) &
                 (self.holding_income == other.holding_income) &
                 (self.holding_value == other.holding_value))
+
+    def to_series(self):
+        return pd.Series({'date': self.date,
+                          'asset_price': self.asset_price,
+                          'asset_income': self.asset_income,
+                          'income': self.holding_income,
+                          'value': self.holding_value})
 
     def to_string(self):
         return pprint.pformat(self.__dict__)
