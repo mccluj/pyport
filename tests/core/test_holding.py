@@ -72,4 +72,3 @@ class TestHolding(unittest.TestCase):
         valuation = HoldingValuation(self.date, 120, 3, 20).to_series()
         expected = pd.concat([attributes, valuation])
         assert_series_equal(self.holding.to_series(), expected)
-
