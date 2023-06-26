@@ -29,14 +29,11 @@ class Portfolio:
 
     def add_holding(self, holding):
         self.cash -= holding.quantity * holding.acquisition_price
-        if holding.valuation is None:
-            holding.mark(holding.acquisition_date, holding.acquisition_price)
-            
-        holding = holding.to_series()
+        holding_series = holding.to_series()
         if self.holdings.empty:
-            self.holdings = holding.to_frame().T
+            self.holdings = holding_series.to_frame().T
         else:
-            self.holdings = pd.concat([self.holdings, holding], axis=0)
+            self.holdings = pd.concat([self.holdings, holding_series], axis=0)
 
     def to_string(self):
         strings = [f'cash: {self.cash}',
