@@ -52,15 +52,6 @@ class TestHolding(unittest.TestCase):
         if SHOW:
             print(valuation.to_string())
 
-    def test_reprices_not_inplace(self):
-        result = self.holding.reprice(self.context, inplace=False)
-        expected = HoldingValuation(self.date, 120, 3, 20)
-        self.assertEqual(expected, result.valuation)
-
-    def test_reprices_inplace(self):
-        result = self.holding.reprice(self.context, inplace=True)
-        self.assertEqual(result, None)
-
     def test_attributes(self):
         expected = pd.Series({'symbol': 'IBM',
                               'acquisition_date': pd.Timestamp('1/1/2023'),

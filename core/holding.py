@@ -37,13 +37,7 @@ class Holding:
         market = context['market']
         accrued_income = asset.compute_accrued_income(market, self.acquisition_date)
         price = asset.reprice(market).price
-        valuation = HoldingValuation(market['date'], price, accrued_income, self.quantity)
-        if inplace:
-            self.valuation = valuation
-        else:
-            instance = copy.copy(self)
-            instance.valuation = valuation
-            return instance
+        self.valuation = HoldingValuation(market['date'], price, accrued_income, self.quantity)
 
     def to_string(self, indent=0):
         return self.to_series().to_string()
