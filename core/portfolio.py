@@ -17,8 +17,7 @@ class Portfolio:
         self.trades = None
 
     def reprice(self, context):
-        if self.holdings is not None:
-            self.holdings.apply(lambda x: x.reprice(context))
+        _ = [holding.reprice(context) for holding in self.holdings]
         
     @property
     def aum(self):

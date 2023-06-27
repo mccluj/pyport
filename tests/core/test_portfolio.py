@@ -18,12 +18,12 @@ class TestPortfolio(unittest.TestCase):
     def test_aum(self):
         assert self.initial_portfolio.aum == 10000
 
-    @pytest.mark.skip
     def test_reprice(self):
         portfolio = self.initial_portfolio
         portfolio.add_holding(self.holding)
+        assert portfolio.aum == 10000  # 8000(cash) + 2000(holdings)
         portfolio.reprice(self.context)
-        print(portfolio.to_string())
+        assert portfolio.aum == 10420  # 8000 + 2000 * 120%
 
     def test_add_holding(self):
         portfolio = self.initial_portfolio
