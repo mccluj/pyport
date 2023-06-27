@@ -12,31 +12,35 @@ class Portfolio:
     """
     def __init__(self, initial_cash=0):
         self.cash = initial_cash
-        self.holdings = pd.DataFrame()
+        self.holdings = []
         self.target = None
         self.trades = None
 
-    def reprice(self, market):
+    def reprice(self, context):
         if self.holdings is not None:
-            self.holdings.apply(lambda x: x.reprice(market))
+            self.holdings.apply(lambda x: x.reprice(context))
         
     @property
     def aum(self):
-        if self.holdings.empty:
-            return self.cash
+        if self.holdings:
+            return self.cash + self.to_frame().value.sum()
         else:
-            return self.cash + self.holdings.value.sum()
+            return self.cash
 
     def add_holding(self, holding):
         self.cash -= holding.quantity * holding.acquisition_price
-        holding_series = holding.to_series()
-        if self.holdings.empty:
-            self.holdings = holding_series.to_frame().T
+        self.holdings.append(holding)
+
+    def to_frame(self):
+        """DataFrame representation of the holdings."""
+        if self.holdings:
+            frame = pd.concat([holding.to_series() for holding in self.holdings], axis=1).T
         else:
-            self.holdings = pd.concat([self.holdings, holding_series], axis=0)
+            frame = pd.DataFrame()
+        return frame
 
     def to_string(self):
         strings = [f'cash: {self.cash}',
-                   self.holdings.to_string(),
+                   self.to_frame().to_string(),
                    ]
         return '\n'.join(strings)
