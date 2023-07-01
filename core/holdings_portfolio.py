@@ -1,6 +1,7 @@
 """HoldingsPortfolio class"""
 from copy import deepcopy
 import pandas as pd
+from pyport.core.holding import Holding
 
 
 class HoldingsPortfolio:
