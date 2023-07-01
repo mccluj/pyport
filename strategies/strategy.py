@@ -1,6 +1,6 @@
 """Strategy Class."""
 from abc import ABC, abstractmethod
-from pyport import Portfolio, Holdings
+from pyport import HoldingsPortfolio, Holdings
 
 
 class Strategy:

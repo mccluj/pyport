@@ -2,7 +2,7 @@
 import unittest
 import pandas as pd
 from pyport.strategies import FixedWeightStrategy as Strategy
-from pyport import Portfolio, Stock
+from pyport import HoldingsPortfolio, Stock
 
 
 class TestStrategy(unittest.TestCase):
@@ -13,7 +13,7 @@ class TestStrategy(unittest.TestCase):
         self.strategy = Strategy(weights=self.weights, frequency='BM', maximum_deviation=0.05)
 
     def test_initial_rebalance(self):
-        portfolio = Portfolio(initial_cash=10000)
+        portfolio = HoldingsPortfolio(initial_cash=10000)
         context = {'market': self.market, 'portfolio': portfolio, 'assets': self.assets}
         holdings = self.strategy.generate_portfolio_holdings(context)
         print(holdings)
