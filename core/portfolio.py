@@ -11,7 +11,7 @@ class Portfolio:
 
     def rebalance(self, target, context):
         """Update positions with new target shares. Update cash with with trade value, where
-        trades assumed executed at context market prices.
+        trades assumed executed at market prices.
         :param target: pd.Series -- target shares by asset
         :param context: dict - market data, asset definitions
         :return: None
@@ -19,11 +19,10 @@ class Portfolio:
         date = context['market']['date']
         prices = context['market']['prices']
         trade_shares = target.sub(self.positions, fill_value=0)
-        Portfolio.check_for_missing_prices(trade_shares, prices)
-        self.prices = prices.reindex(trade_shares.index)
+        self.prices = Portfolio.check_for_missing_prices(trade_shares, prices)
         self.trades = pd.DataFrame({'shares': trade_shares, 'price': self.prices})
         self.positions = target
-        self.cash -= self.trades.shares @ self.trades.price
+        self.cash -= trade_shares @ self.prices
 
     def apply_dividends(self, dividends):
         """Update internal cash with dividends paid on asset positions.
@@ -32,14 +31,12 @@ class Portfolio:
         dividend_value = dividends.mul(self.positions, fill_value=0).sum()
         self.cash += dividend_value
 
-    def reprice(self, context):
-        """Reprice all assets.
-        :param context: dict
+    def mark_positions(self, prices):
+        """Update prices used to evaluate positions.
+        :param prices: pd.Series -- market prices
         :return None
         """
-        prices = context['market']['prices']
-        Portfolio.check_for_missing_prices(self.positions, prices)
-        self.prices = prices
+        self.prices = Portfolio.check_for_missing_prices(self.positions, prices)
 
     def to_string(self):
         return f'Portfolio(cash={self.cash}, aum={self.aum}):\npositions={self.positions}'
@@ -50,7 +47,8 @@ class Portfolio:
         missing = prices[prices.isna()].index.to_list()
         if len(missing) > 0:
             raise ValueError(f'Missing prices for {missing}')
-        
+        return prices
+
     @property
     def aum(self):
         return self.cash + self.positions @ self.prices
