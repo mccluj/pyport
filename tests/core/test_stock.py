@@ -12,6 +12,7 @@ class TestStock(unittest.TestCase):
 
     def test_reprice(self):
         result = self.stock.reprice(self.market)
+        assert result.date == pd.Timestamp(self.market['date'])
         self.assertAlmostEqual(result.price, self.market['spot_prices']['SPY'])
 
     def test_accrued_income(self):

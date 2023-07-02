@@ -13,7 +13,7 @@ class Stock(Asset):
     def reprice(self, market):
         date = market['date']
         price = market['spot_prices'][self.name]
-        return AssetPrice(date, price)
+        return AssetPrice(name=self.name, date=date, price=price)
 
     def compute_accrued_income(self, market, acquisition_date):
         """Accrue dividends after acquisition date and on or before market date."""
