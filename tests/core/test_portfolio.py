@@ -23,7 +23,7 @@ class TestPortfolio(unittest.TestCase):
         portfolio = self.initial_portfolio
         assert portfolio.cash == self.cash
         assert portfolio.aum == self.cash
-        assert portfolio.holdings.empty
+        assert portfolio.positions.empty
         assert portfolio.trades.empty
 
     def test_rebalance(self):
@@ -39,10 +39,10 @@ class TestPortfolio(unittest.TestCase):
         div_amount = 5
         dividends = pd.Series({'SPY': div_amount})
         portfolio.apply_dividends(dividends)
-        assert portfolio.aum - aum_0 == portfolio.holdings['SPY'] * div_amount
+        assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * div_amount
         # Note cash from dividends accumulate.
         portfolio.apply_dividends(dividends)
-        assert portfolio.aum - aum_0 == portfolio.holdings['SPY'] * 2 * div_amount
+        assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * 2 * div_amount
 
     def test_reprice_prices(self):
         portfolio = self.rebalanced_portfolio
@@ -53,4 +53,4 @@ class TestPortfolio(unittest.TestCase):
         prices['SPY'] += price_change
         portfolio.reprice(self.context)
         aum_1 = portfolio.aum
-        assert aum_1 - aum_0 == portfolio.holdings['SPY'] * price_change
+        assert aum_1 - aum_0 == portfolio.positions['SPY'] * price_change
