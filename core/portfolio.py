@@ -17,7 +17,7 @@ class Portfolio:
         :return: None
         """
         date = context['market']['date']
-        prices = context['market']['spot_prices']
+        prices = context['market']['prices']
         trade_shares = target.sub(self.holdings, fill_value=0)
         Portfolio.check_for_missing_prices(trade_shares, prices)
         self.prices = prices.reindex(trade_shares.index)
@@ -30,9 +30,9 @@ class Portfolio:
         :param context: dict
         :return None
         """
-        prices = context['market']['spot_prices']
+        prices = context['market']['prices']
         Portfolio.check_for_missing_prices(self.holdings, prices)
-        self.prices = prices.reindex(self.holdings)
+        self.prices = prices.reindex(self.holdings.index)
         dividends = context['market']['dividends']
         dividend_value = dividends.mul(self.holdings, fill_value=0).sum()
         self.cash += dividend_value
