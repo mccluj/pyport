@@ -11,7 +11,10 @@ class Inventory:
         self.open_lots = []
         self.closed_lots = []
 
-    def add_trades(self):
+    def add_trades(self, trades):
+        """Trades, typically retrieved by a backtest module from Portfolio instance,
+        are merged into the inventory according to the inventory valuation method.
+        """
         # Add qp_builder logic here
 
     def get_open_lots(self):
