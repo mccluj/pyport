@@ -44,12 +44,6 @@ class TestPortfolio(unittest.TestCase):
         portfolio.apply_dividends(dividends)
         assert portfolio.aum - aum_0 == portfolio.holdings['SPY'] * 2 * div_amount
 
-
-
-        div_change = 10
-        dividends['SPY'] += div_change
-        portfolio.apply_dividends(dividends)
-
     def test_reprice_prices(self):
         portfolio = self.rebalanced_portfolio
         prices = self.context['market']['prices']
