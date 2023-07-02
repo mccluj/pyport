@@ -9,7 +9,7 @@ class TestPortfolio(unittest.TestCase):
     def setUp(self):
         self.cash = 10000
         self.prices = pd.Series({'SPY': 400, 'AGG': 50})
-        self.dividends = pd.Series({'SPY': 0})
+        self.dividends = pd.Series({'SPY': 5})
         self.context = {'assets': {'SPY': Stock('SPY'),
                                    'AGG': Stock('AGG')},
                         'market': {'date': '1/1/2023',
