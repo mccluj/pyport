@@ -25,17 +25,21 @@ class Portfolio:
         self.holdings = target
         self.cash -= self.trades.shares @ self.trades.price
 
+    def apply_dividends(self, dividends):
+        """Update internal cash with dividends paid on asset holdings.
+        :param dividends: pd.Series
+        """
+        dividend_value = dividends.mul(self.holdings, fill_value=0).sum()
+        self.cash += dividend_value
+
     def reprice(self, context):
-        """Reprice all assets, update cash with dividends.
+        """Reprice all assets.
         :param context: dict
         :return None
         """
         prices = context['market']['prices']
         Portfolio.check_for_missing_prices(self.holdings, prices)
-        self.prices = prices.reindex(self.holdings.index)
-        dividends = context['market']['dividends']
-        dividend_value = dividends.mul(self.holdings, fill_value=0).sum()
-        self.cash += dividend_value
+        self.prices = prices
 
     def to_string(self):
         return f'Portfolio(cash={self.cash}, aum={self.aum}):\nholdings={self.holdings}'
