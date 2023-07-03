@@ -1,6 +1,7 @@
 """Tests of Option class"""
 import unittest
 import pytest
+import numpy as np
 from pyport import Option
 
 
@@ -18,9 +19,15 @@ class TestOption(unittest.TestCase):
             }
 
     def test_put_call_parity(self):
-        call = Option('SPY', 'call', '1/1/2024', 400).reprice(self.context)
-        put = Option('SPY', 'put', '1/1/2024', 400).reprice(self.context)
-
+        strike = 400
+        call = Option('SPY', 'call', '1/1/2024', strike).reprice(self.context)
+        put = Option('SPY', 'put', '1/1/2024', strike).reprice(self.context)
+        stock = self.context['market']['spot_prices']['SPY']
+        discount = self.context['market']['discount_rates']
+        div_rate = self.context['models']['div_rates']['SPY']
+        forward = stock * np.exp(-div_rate) - strike * np.exp(-discount)
+        self.assertAlmostEqual(call.price - put.price, forward)
+        
     def test_equality(self):
         option_1 = Option('SPY', 'call', '1/1/2024', 400)
         option_2 = Option('SPY', 'call', '1/1/2024', 400)
