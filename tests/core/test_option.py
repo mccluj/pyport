@@ -9,7 +9,7 @@ class TestOption(unittest.TestCase):
         self.context = {
             'market': {'date': '1/1/2023',
                        'spot_prices': {'SPY': 400},
-                       'rates': 0.05,
+                       'discount_rates': 0.05,
                        },
             'models': {'volatilities': {'SPY': 0.20},
                        'div_rates': {'SPY': 0.016},
@@ -18,7 +18,8 @@ class TestOption(unittest.TestCase):
             }
 
     def test_put_call_parity(self):
-        pass
+        call = Option('SPY', 'call', '1/1/2024', 400).reprice(self.context)
+        put = Option('SPY', 'put', '1/1/2024', 400).reprice(self.context)
 
     def test_equality(self):
         option_1 = Option('SPY', 'call', '1/1/2024', 400)
@@ -27,11 +28,10 @@ class TestOption(unittest.TestCase):
         assert option_1 == option_2
         assert option_2 != option_3
 
-    @pytest.mark.skip
     def test_to_string(self):
-        print(self.option.to_string())
+        option = Option('SPY', 'call', '1/1/2024', 400)
+        assert option.to_string() == 'Option(SPY_20240101_400.00_call)'
 
-    @pytest.mark.skip
-    def test_reprice(self):
-        result = self.option.reprice(self.context)
-        print(result)
+    def test_option_reprice(self):
+        pricing_info = Option('SPY', 'call', '1/1/2024', 400).reprice(self.context)
+        assert pricing_info.to_string() == 'SPY_20240101_400.00_call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'

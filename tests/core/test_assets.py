@@ -1,6 +1,7 @@
 """Test pricing for assets."""
 import unittest
 import pandas as pd
+from pandas.testing import assert_series_equal
 from pyport import Stock
 
 
@@ -11,4 +12,4 @@ class TestAssets(unittest.TestCase):
         
     def test_reprice_assets(self):
         prices = self.assets.apply(lambda asset: asset.reprice(self.market).price)
-        print(prices)
+        assert_series_equal(prices, pd.Series(self.market['spot_prices']))

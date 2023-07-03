@@ -16,5 +16,4 @@ class TestStrategy(unittest.TestCase):
         portfolio = HoldingsPortfolio(initial_cash=10000)
         context = {'market': self.market, 'portfolio': portfolio, 'assets': self.assets}
         holdings = self.strategy.generate_portfolio_holdings(context)
-        print(holdings)
-
+        assert holdings is None

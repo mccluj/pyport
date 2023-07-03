@@ -9,10 +9,10 @@ from pyport.core.asset import Asset, AssetPrice
 class Option(Asset):
     def __init__(self, underlyer, option_type, expiration, strike):
         self.underlyer = underlyer
-        self.option_type = option_type
+        self.option_type = option_type.lower()
         self.expiration = pd.Timestamp(expiration)
         self.strike = strike
-        name = f'{underlyer}_{self.expiration:%Y%m%d}_{strike:.2f}_{option_type}'
+        name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{strike:.2f}_{self.option_type}'
         super().__init__(name)
         
     @staticmethod
@@ -53,15 +53,17 @@ class Option(Asset):
     def reprice(self, context):
         market = context['market']
         models = context['models']
-        date = market['date']
-        underlyler = self.underlyler
-        time_to_expiry = (self.expiration - date) / pd.Timestamp('365 days')
+        date = pd.Timestamp(market['date'])
+        underlyer = self.underlyer
+        time_to_expiry = (self.expiration - date) / pd.Timedelta('365 days')
         underlyer_price = market['spot_prices'][underlyer]
+        discount_rate = market['discount_rates']
         div_rate = models.get('div_rates', {}).get(underlyer, 0.0)
-        sigma = models['volatilities'][undelyer]
+        sigma = models['volatilities'][underlyer]
         data = black_scholes(underlyer_price, self.strike, time_to_expiry,
-                             sigma, div_rate, self.option_type)
-        return AssetPrice(name=self.name, date=date, price=price)
+                             sigma, discount_rate, div_rate, self.option_type)
+        data['und_price'] = underlyer_price
+        return OptionPrice(name=self.name, date=date, **data)
         
     def __eq__(self, other):
         attributes = ['name', 'underlyer', 'option_type', 'expiration', 'strike']
@@ -69,17 +71,17 @@ class Option(Asset):
 
 
 class OptionPrice(AssetPrice):
-    def __init__(self, name, price, date, **kwargs):
-        super().__init__(name, price, date, **kwargs)
-        for key in ['delta', 'gamma', 'vega', 'theta', 'rho', 'underlying_price']:
+    def __init__(self, name, date, **kwargs):
+        super().__init__(name, date, **kwargs)
+        for key in ['delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']:
             setattr(self, key, kwargs[key])
         
-    def to_string(self):
-        
-        return_string = f'Option({self.name}, {self.date:%Y-%m-%d}'
-        val_strings = [f'{key}: {getatttr(self, key):.4f}'
-                       for key in ['delta', 'gamma', 'vega', 'theta', 'rho', 'underlying_price']]
-        return_string += ', '.join(val_strings)
+    def to_string(self, delim=', '):
+        core_string = f'{self.name}: '
+        date_string = f'date: {self.date:%Y-%m-%d}, '
+        val_strings = [f'{key}: {getattr(self, key):.2f}'
+                       for key in ['price', 'delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']]
+        return core_string + date_string + delim.join(val_strings)
 
 
 def implied_strike(price, S, r, T, sigma, q, option_type):
@@ -110,15 +112,15 @@ def implied_strike(price, S, r, T, sigma, q, option_type):
     return implied_strike
                 
                 
-def black_scholes(S, K, r, T, sigma, q, option_type):
+def black_scholes(S, K, T, sigma, r, q, option_type):
     """
     Calculates the Black-Scholes option pricing model with Greeks.
 
     :param S: Current price of the underlying asset.
     :param K: Strike price of the option.
-    :param r: Risk-free interest rate.
     :param T: Time to expiration (in years).
     :param sigma: Volatility of the underlying asset.
+    :param r: Risk-free interest rate.
     :param q: Dividend rate of the underlying asset.
     :param option_type: Type of the option, either 'call' or 'put'.
 

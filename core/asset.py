@@ -28,14 +28,14 @@ class Asset(ABC):
     def to_string(self, indent=0):
         padding = ' ' * indent
         _class = type(self).__name__
-        return f'{padding}{_class}({self.name}): price={self.price}'
+        return f'{padding}{_class}({self.name})'
 
 
 class AssetPrice:
-    def __init__(self, name, price, date=None, **kwargs):
+    def __init__(self, name, date, price, **kwargs):
         self.name = name
-        self.price = price
         self.date = pd.Timestamp(date)
+        self.price = price
 
     def to_string(self):
-        return f'Asset({self.name}, {self.date:%Y-%m-%d}, {self.price}'
+        return f'Asset({self.name}, {self.date:%Y-%m-%d}, {self.price})'
