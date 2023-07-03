@@ -33,15 +33,15 @@ class TestPortfolio(unittest.TestCase):
         assert portfolio.aum == self.cash
         assert portfolio.cash == self.cash - target_value
 
-    def test_apply_dividends(self):
+    def test_add_dividends_to_cash(self):
         portfolio = self.rebalanced_portfolio
         aum_0 = portfolio.aum
         div_amount = 5
         dividends = pd.Series({'SPY': div_amount})
-        portfolio.apply_dividends(dividends)
+        portfolio.add_dividends_to_cash(dividends)
         assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * div_amount
         # Note cash from dividends accumulate.
-        portfolio.apply_dividends(dividends)
+        portfolio.add_dividends_to_cash(dividends)
         assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * 2 * div_amount
 
     def test_mark_positions(self):

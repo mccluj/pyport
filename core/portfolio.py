@@ -24,7 +24,7 @@ class Portfolio:
         self.positions = target
         self.cash -= trade_shares @ self.prices
 
-    def apply_dividends(self, dividends):
+    def add_dividends_to_cash(self, dividends):
         """Update internal cash with dividends paid on asset positions.
         :param dividends: pd.Series
         """
