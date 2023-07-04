@@ -8,12 +8,17 @@ from pyport.core.asset import Asset, AssetPrice
 # TODO: Add moneyness keyword
 
 class Option(Asset):
-    def __init__(self, underlyer, option_type, expiration, strike):
+    def __init__(self, name, underlyer, option_type, expiration, strike):
+        super().__init__(name)
         self.underlyer = underlyer
         self.option_type = option_type.lower()
         self.expiration = pd.Timestamp(expiration)
         self.strike = strike
-        name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{strike:.2f}_{self.option_type}'
+        
+        
+    def rename(self, name=None):
+        if name is None:
+            name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{strike:.2f}_{self.option_type}'
         super().__init__(name)
         
     @staticmethod
@@ -29,7 +34,7 @@ class Option(Asset):
         underlyer_price = market['spot_prices'][underlyer]
         
         if 'expiration' in kwargs:
-            expiration = kwargs['expiration']
+            expiration = pd.Timestamp(kwargs['expiration'])
         elif 'tenor' in kwargs:
             expiration = pd.Timestamp(market['date']) + to_offset(kwargs['tenor'])
         else:

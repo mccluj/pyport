@@ -20,8 +20,8 @@ class TestOption(unittest.TestCase):
 
     def test_put_call_parity(self):
         strike = 400
-        call = Option('SPY', 'call', '1/1/2024', strike).reprice(self.context)
-        put = Option('SPY', 'put', '1/1/2024', strike).reprice(self.context)
+        call = Option('spy_call', 'SPY', 'call', '1/1/2024', strike).reprice(self.context)
+        put = Option('spy_put', 'SPY', 'put', '1/1/2024', strike).reprice(self.context)
         stock = self.context['market']['spot_prices']['SPY']
         discount = self.context['market']['discount_rates']
         div_rate = self.context['models']['div_rates']['SPY']
@@ -29,16 +29,16 @@ class TestOption(unittest.TestCase):
         self.assertAlmostEqual(call.price - put.price, forward)
         
     def test_equality(self):
-        option_1 = Option('SPY', 'call', '1/1/2024', 400)
-        option_2 = Option('SPY', 'call', '1/1/2024', 400)
-        option_3 = Option('SPY', 'put', '1/1/2024', 400)
+        option_1 = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
+        option_2 = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
+        option_3 = Option('spy_put', 'SPY', 'put', '1/1/2024', 400)
         assert option_1 == option_2
         assert option_2 != option_3
 
     def test_to_string(self):
-        option = Option('SPY', 'call', '1/1/2024', 400)
-        assert option.to_string() == 'Option(SPY_20240101_400.00_call)'
+        option = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
+        assert option.to_string() == 'Option(spy_call)'
 
     def test_option_reprice(self):
-        pricing_info = Option('SPY', 'call', '1/1/2024', 400).reprice(self.context)
-        assert pricing_info.to_string() == 'SPY_20240101_400.00_call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
+        pricing_info = Option('spy_call', 'SPY', 'call', '1/1/2024', 400).reprice(self.context)
+        assert pricing_info.to_string() == 'spy_call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
