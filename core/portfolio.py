@@ -9,15 +9,15 @@ class Portfolio:
         self.prices = pd.Series(dtype=float)
         self.trades = pd.DataFrame()
 
-    def rebalance(self, context, target):
+    def rebalance(self, market, target):
         """Update positions with new target shares. Update cash with with trade value, where
         trades assumed executed at market prices.
-        :param context: dict - market data, asset definitions
+        :param market: dict
         :param target: pd.Series -- target shares by asset
         :return: None
         """
-        date = context['market']['date']
-        market_prices = context['market']['prices']
+        date = market['date']
+        market_prices = market['prices']
         trade_shares = target.sub(self.positions, fill_value=0)
         trade_prices = Portfolio.check_for_missing_prices(trade_shares, market_prices)
         self.trades = pd.DataFrame({'shares': trade_shares, 'prices': trade_prices})

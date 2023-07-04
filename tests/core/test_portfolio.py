@@ -9,15 +9,11 @@ class TestPortfolio(unittest.TestCase):
     def setUp(self):
         self.cash = 10000
         self.prices = pd.Series({'SPY': 400, 'AGG': 50})
-        self.context = {'assets': {'SPY': Stock('SPY'),
-                                   'AGG': Stock('AGG')},
-                        'market': {'date': '1/1/2023',
-                                   'prices': self.prices},
-                        }
+        self.market = {'date': '1/1/2023', 'prices': self.prices}
         self.target = pd.Series({'SPY': 10, 'AGG': 50})
         self.initial_portfolio = Portfolio(cash=self.cash)
         self.rebalanced_portfolio = Portfolio(cash=self.cash)
-        self.rebalanced_portfolio.rebalance(self.context, self.target)
+        self.rebalanced_portfolio.rebalance(self.market, self.target)
 
     def test_initial_portfolio(self):
         portfolio = self.initial_portfolio
@@ -28,7 +24,6 @@ class TestPortfolio(unittest.TestCase):
 
     def test_rebalance(self):
         portfolio = self.rebalanced_portfolio
-        # portfolio.rebalance(self.target, self.context)
         target_value = self.prices @ self.target
         assert portfolio.aum == self.cash
         assert portfolio.cash == self.cash - target_value
@@ -40,13 +35,13 @@ class TestPortfolio(unittest.TestCase):
         dividends = pd.Series({'SPY': div_amount})
         portfolio.add_dividends_to_cash(dividends)
         assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * div_amount
-        # Note cash from dividends accumulate.
+        # Note to users: cash from dividends accumulate.
         portfolio.add_dividends_to_cash(dividends)
         assert portfolio.aum - aum_0 == portfolio.positions['SPY'] * 2 * div_amount
 
     def test_mark_positions(self):
         portfolio = self.rebalanced_portfolio
-        prices = self.context['market']['prices']
+        prices = self.prices
         price_change = 100
         portfolio.mark_positions(prices)
         aum_0 = portfolio.aum
