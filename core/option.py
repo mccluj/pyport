@@ -18,7 +18,7 @@ class Option(Asset):
         
     def rename(self, name=None):
         if name is None:
-            name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{strike:.2f}_{self.option_type}'
+            name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
         
     @staticmethod

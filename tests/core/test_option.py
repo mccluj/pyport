@@ -42,3 +42,11 @@ class TestOption(unittest.TestCase):
     def test_option_reprice(self):
         pricing_info = Option('spy_call', 'SPY', 'call', '1/1/2024', 400).reprice(self.context)
         assert pricing_info.to_string() == 'spy_call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
+
+    def test_rename(self):
+        option = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
+        assert option.name == 'spy_call'
+        option.rename('dummy')
+        assert option.name == 'dummy'
+        option.rename()
+        assert option.name == 'SPY_20240101_400.00_call'
