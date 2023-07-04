@@ -17,12 +17,13 @@ class Portfolio:
         :return: None
         """
         date = context['market']['date']
-        prices = context['market']['prices']
+        market_prices = context['market']['prices']
         trade_shares = target.sub(self.positions, fill_value=0)
-        self.prices = Portfolio.check_for_missing_prices(trade_shares, prices)
-        self.trades = pd.DataFrame({'shares': trade_shares, 'price': self.prices})
-        self.positions = target
-        self.cash -= trade_shares @ self.prices
+        trade_prices = Portfolio.check_for_missing_prices(trade_shares, market_prices)
+        self.trades = pd.DataFrame({'shares': trade_shares, 'prices': trade_prices})
+        self.positions = target.copy()
+        self.cash -= self.trades.shares @ self.trades.prices
+        self.mark_positions(market_prices)
 
     def add_dividends_to_cash(self, dividends):
         """Update internal cash with dividends paid on asset positions.
