@@ -27,59 +27,74 @@ class Option(Asset):
         else:
             self.expiration = expiration
         self.strike = strike
+        self.moneyness = moneyness
+        self.tenor = tenor
         
     def rename(self, name=None):
         if name is None:
             name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
         
-    def instantiate(market, option_type=None):
+    def instantiate(self, market, option_price=None):
         """Define option attributes based on current market levels. Alternatives:
         expiration could be computed from market.date + time_delta from tenor frequency.
         strike could be defined as a percent of spot or implied from an given option price.
         :param market: dict
         :param option_price: float -- for computing implied strike
         """
-        option_type = kwargs['option_type']
-        underlyer = kwargs['underlyer']
-        underlyer_price = market['spot_prices'][underlyer]
-        
-        if 'expiration' in kwargs:
-            expiration = pd.Timestamp(kwargs['expiration'])
-        elif 'tenor' in kwargs:
-            expiration = pd.Timestamp(market['date']) + to_offset(kwargs['tenor'])
-        else:
-            raise AttributeError('Either expiration or tenor must be specified')
-        if 'strike' in kwargs:
-            strike = kwargs['strike']
-            if isinstance(strike, str):
-                if strike[-1] == '%':
-                    strike = 0.01 * float(strike[:-1]) * underlyer_price
-                else:
-                    strike = float(strike)
-            elif 'price' in kwargs:
-                price = kwargs['price']
-                rate = market['rate']
-                date = pd.Timestamp(market['date'])
-                time_to_expiry = (expiration - date) / pd.Timedelta('365 days')
-                div_rate = context['models']['dividend_rate']['underlyer']
-                strike = implied_strike(price, underlyer_price, rate, time_to_expiry,
-                                        div_rate, option_type)
+        # Expiration must be done first, in case implied strike needs to be calculated.
+        self._instantiate_expiration(market)
+        self._instantiate_strike(market, option_price)
         return self
 
-    def reprice(self, context):
-        market = context['market']
-        models = context['models']
+    def _instantiate_expiration(self, market):
+        """Compute expiration as market date + tenor
+        :param market: dict
+        """
+        date = pd.Timestamp(market['date'])
+        if self.expiration is None:
+            if isinstance(self.tenor, (np.float64, float, int)):
+                self.expiration = date + pd.Timedelta('365 Days') * self.tenor
+            else:
+                self.expiration = pd.Timestamp(market['date']) + to_offset(self.tenor)
+        
+    def _instantiate_strike(self, market, option_price=None):
+        """Compute strike as percent of spot or as implied from an option_price.
+        :param market: dict
+        :param option_price: float -- for computing implied strike
+        :return: float -- strike
+        """
+        strike = self.strike
+        spot_price = market['spot_prices'][self.underlyer]
+        date = pd.Timestamp(market['date'])
+        if strike == 'implied':
+            rate = market['discount_rate']
+            div_rate = maket.get('div_rates', {}).get(self.underlyer, 0)
+            strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
+                                    div_rate, option_type)
+        elif self.moneyness is not None:
+            strike = spot_price * self.moneyness
+        elif isinstance(strike, (np.float64, float, int)):
+            strike = self.strike
+        else:
+            raise ValueError(f'Either strike or moneyness must be specified')
+
+        return strike
+        
+    def time_to_expiry(self, date):
+        date = pd.Timestamp(date)
+        return (self.expiration - date) / pd.Timedelta('365 days')
+        
+    def reprice(self, market):
         date = pd.Timestamp(market['date'])
         underlyer = self.underlyer
-        time_to_expiry = (self.expiration - date) / pd.Timedelta('365 days')
-        underlyer_price = market['spot_prices'][underlyer]
+        spot_price = market['spot_prices'][underlyer]
         discount_rate = market['discount_rates']
-        div_rate = models.get('div_rates', {}).get(underlyer, 0.0)
-        sigma = models['volatilities'][underlyer]
-        data = black_scholes(underlyer_price, self.strike, time_to_expiry,
+        div_rate = market.get('div_rates', {}).get(underlyer, 0.0)
+        sigma = market['volatilities'][underlyer]
+        data = black_scholes(spot_price, self.strike, self.time_to_expiry(date),
                              sigma, discount_rate, div_rate, self.option_type)
-        data['und_price'] = underlyer_price
+        data['und_price'] = spot_price
         return OptionPrice(name=self.name, date=date, **data)
         
     def __eq__(self, other):
