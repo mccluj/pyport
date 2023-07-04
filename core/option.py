@@ -68,10 +68,13 @@ class Option(Asset):
         spot_price = market['spot_prices'][self.underlyer]
         date = pd.Timestamp(market['date'])
         if strike == 'implied':
-            rate = market['discount_rate']
-            div_rate = maket.get('div_rates', {}).get(self.underlyer, 0)
+            if option_price is None:
+                raise ValueError('missing option_price implied strike calculation')
+            rate = market['discount_rates']
+            div_rate = market.get('div_rates', {}).get(self.underlyer, 0)
+            volatility = market['volatilities'][self.underlyer]
             self.strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
-                                         div_rate, option_type)
+                                         volatility, div_rate, self.option_type)
         elif self.moneyness is not None:
             if isinstance(self.moneyness, (np.float64, float, int)):
                 self.strike = spot_price * self.moneyness
@@ -136,7 +139,7 @@ def implied_strike(price, S, r, T, sigma, q, option_type):
     :return: Implied strike price.
     """
     def black_scholes_strike(K):
-        option = black_scholes(S, K, r, T, sigma, q, option_type)
+        option = black_scholes(S, K, T, sigma, r, q, option_type)
         return option['price']
 
     # Adjust the interval bounds if they are too close

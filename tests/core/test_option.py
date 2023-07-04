@@ -69,3 +69,16 @@ class TestOption(unittest.TestCase):
         assert option.strike == 408
         option = Option('test', 'SPY', 'call', '1/1/2024', moneyness='102%').instantiate(market)
         assert option.strike == 408
+
+    def test_instantiate_implied_strike_missing_option_price(self):
+        market = self.market
+        with pytest.raises(ValueError) as excinfo:
+            _ = Option('test', 'SPY', 'call', '1/1/2024', strike='implied').instantiate(market)
+        assert str(excinfo.value) == 'missing option_price implied strike calculation'
+
+    def test_instantiate_implied_strike(self):
+        market = self.market
+        target = Option('test', 'SPY', 'call', '1/1/2024', strike=408).reprice(market)
+        option = Option('test', 'SPY', 'call', '1/1/2024', strike='implied')
+        option.instantiate(market, option_price=target.price)
+        self.assertAlmostEqual(option.strike, 408)
