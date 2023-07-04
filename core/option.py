@@ -101,6 +101,9 @@ class Option(Asset):
         attributes = ['name', 'underlyer', 'option_type', 'expiration', 'strike']
         return all([getattr(self, key) == getattr(other, key) for key in attributes])
 
+    def to_string(self, indent=0):
+        return f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
+        
 
 class OptionPrice(AssetPrice):
     def __init__(self, name, date, **kwargs):
