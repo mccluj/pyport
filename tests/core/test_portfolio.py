@@ -17,7 +17,7 @@ class TestPortfolio(unittest.TestCase):
         self.target = pd.Series({'SPY': 10, 'AGG': 50})
         self.initial_portfolio = Portfolio(cash=self.cash)
         self.rebalanced_portfolio = Portfolio(cash=self.cash)
-        self.rebalanced_portfolio.rebalance(self.target, self.context)
+        self.rebalanced_portfolio.rebalance(self.context, self.target)
 
     def test_initial_portfolio(self):
         portfolio = self.initial_portfolio

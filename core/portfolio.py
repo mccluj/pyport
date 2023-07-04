@@ -9,11 +9,11 @@ class Portfolio:
         self.prices = pd.Series(dtype=float)
         self.trades = pd.DataFrame()
 
-    def rebalance(self, target, context):
+    def rebalance(self, context, target):
         """Update positions with new target shares. Update cash with with trade value, where
         trades assumed executed at market prices.
-        :param target: pd.Series -- target shares by asset
         :param context: dict - market data, asset definitions
+        :param target: pd.Series -- target shares by asset
         :return: None
         """
         date = context['market']['date']
