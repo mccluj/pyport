@@ -51,6 +51,10 @@ class TestOption(unittest.TestCase):
         option.rename()
         assert option.name == 'SPY_20240101_400.00_call'
 
+    def test_to_string(self):
+        option = Option('test', 'SPY', 'call', '1/1/2024', strike=400)
+        assert option.to_string() == 'SPY_20240101_400.00_call'
+
     def test_instantiate_strike_value_error(self):
         market = self.market
         option = Option('test', 'SPY', 'call', '1/1/2024')
@@ -61,9 +65,7 @@ class TestOption(unittest.TestCase):
         
     def test_instantiate_strike_percent_of_spot(self):
         market = self.market
+        option = Option('test', 'SPY', 'call', '1/1/2024', moneyness=1.02).instantiate(market)
+        assert option.strike == 408
         option = Option('test', 'SPY', 'call', '1/1/2024', moneyness='102%').instantiate(market)
-        print(option.to_string())
-
-    def test_to_string(self):
-        option = Option('test', 'SPY', 'call', '1/1/2024', strike=400)
-        assert option.to_string() == 'SPY_20240101_400.00_call'
+        assert option.strike == 408

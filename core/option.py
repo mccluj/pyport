@@ -70,17 +70,19 @@ class Option(Asset):
         if strike == 'implied':
             rate = market['discount_rate']
             div_rate = maket.get('div_rates', {}).get(self.underlyer, 0)
-            strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
-                                    div_rate, option_type)
+            self.strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
+                                         div_rate, option_type)
         elif self.moneyness is not None:
-            strike = spot_price * self.moneyness
+            if isinstance(self.moneyness, (np.float64, float, int)):
+                self.strike = spot_price * self.moneyness
+            else:
+                moneyness = 0.01 * float(self.moneyness[:-1])  # drop '%'
+                self.strike = spot_price * moneyness
         elif isinstance(strike, (np.float64, float, int)):
-            strike = self.strike
+            pass                # strike is unchanged
         else:
             raise ValueError(f'Either strike or moneyness must be specified')
 
-        return strike
-        
     def time_to_expiry(self, date):
         date = pd.Timestamp(date)
         return (self.expiration - date) / pd.Timedelta('365 days')
