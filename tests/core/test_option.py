@@ -2,6 +2,7 @@
 import unittest
 import pytest
 import numpy as np
+import pandas as pd
 from pyport import Option
 
 
@@ -81,4 +82,22 @@ class TestOption(unittest.TestCase):
         target = Option('test', 'SPY', 'call', '1/1/2024', strike=408).reprice(market)
         option = Option('test', 'SPY', 'call', '1/1/2024', strike='implied')
         option.instantiate(market, option_price=target.price)
+        self.assertAlmostEqual(option.strike, 408)
+
+    def test_instantiate_with_float_tenor(self):
+        market = self.market
+        option = Option('test', 'SPY', 'call', strike=400, tenor=1.0).instantiate(market)
+        assert option.expiration == pd.Timestamp('1/1/2024')
+
+    def test_instantiate_with_string_tenor(self):
+        market = self.market
+        option = Option('test', 'SPY', 'call', strike=400, tenor='A').instantiate(market)
+        assert option.expiration == pd.Timestamp('12/31/2023')
+
+    def test_instantiate_with_implied_and_tenor(self):
+        market = self.market
+        target = Option('test', 'SPY', 'call', '12/31/2023', strike=408).reprice(market)
+        option = (Option('test', 'SPY', 'call', strike='implied', tenor='A')
+                  .instantiate(market, target.price))
+        assert option.expiration == pd.Timestamp('12/31/2023')
         self.assertAlmostEqual(option.strike, 408)

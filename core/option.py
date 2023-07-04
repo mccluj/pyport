@@ -3,6 +3,7 @@ from math import exp, log, sqrt
 from scipy.stats import norm
 import numpy as np
 import pandas as pd
+from pandas.tseries.frequencies import to_offset
 from pyport.core.asset import Asset, AssetPrice
 
 # TODO: Add moneyness keyword
