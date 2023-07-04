@@ -15,7 +15,6 @@ class Option(Asset):
         self.expiration = pd.Timestamp(expiration)
         self.strike = strike
         
-        
     def rename(self, name=None):
         if name is None:
             name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
