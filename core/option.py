@@ -8,11 +8,24 @@ from pyport.core.asset import Asset, AssetPrice
 # TODO: Add moneyness keyword
 
 class Option(Asset):
-    def __init__(self, name, underlyer, option_type, expiration, strike):
+    def __init__(self, name, underlyer, option_type, expiration=None, strike=None,
+                 moneyness=None, tenor=None):
+        """
+        :param name: str
+        :param underlyer: str
+        :param option_type: "put" or "call"
+        :param strike: float or "implied"
+        :param moneyness: float -- decimal percent of spot
+        :param expiration: date object
+        :param tenor: float(years) or str(pandas freq)
+        """
         super().__init__(name)
         self.underlyer = underlyer
-        self.option_type = option_type.lower()
-        self.expiration = pd.Timestamp(expiration)
+        self.option_type = option_type
+        if expiration is not None:
+            self.expiration = pd.Timestamp(expiration)
+        else:
+            self.expiration = expiration
         self.strike = strike
         
     def rename(self, name=None):
@@ -20,14 +33,13 @@ class Option(Asset):
             name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
         
-    @staticmethod
-    def from_the_market(context, **kwargs):
+    def instantiate(market, option_type=None):
         """Define option attributes based on current market levels. Alternatives:
         expiration could be computed from market.date + time_delta from tenor frequency.
         strike could be defined as a percent of spot or implied from an given option price.
-        :param context: dict -- market, assets, models
+        :param market: dict
+        :param option_price: float -- for computing implied strike
         """
-        market = context['market']
         option_type = kwargs['option_type']
         underlyer = kwargs['underlyer']
         underlyer_price = market['spot_prices'][underlyer]
@@ -53,7 +65,7 @@ class Option(Asset):
                 div_rate = context['models']['dividend_rate']['underlyer']
                 strike = implied_strike(price, underlyer_price, rate, time_to_expiry,
                                         div_rate, option_type)
-        return Option(underlyer, option_type, expiration, strike)
+        return self
 
     def reprice(self, context):
         market = context['market']
