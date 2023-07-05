@@ -61,7 +61,7 @@ class TestOption(unittest.TestCase):
         option = Option('test', 'SPY', 'call', '1/1/2024')
         assert option.strike is None
         with pytest.raises(ValueError) as excinfo:
-            option._instantiate_strike(market)
+            _ = option._calculate_strike(market)
         assert str(excinfo.value) == 'Either strike or moneyness must be specified'
         
     def test_instantiate_strike_percent_of_spot(self):

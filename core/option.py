@@ -6,8 +6,6 @@ import pandas as pd
 from pandas.tseries.frequencies import to_offset
 from pyport.core.asset import Asset, AssetPrice
 
-# TODO: Add moneyness keyword
-
 class Option(Asset):
     def __init__(self, name, underlyer, option_type, expiration=None, strike=None,
                  moneyness=None, tenor=None):
@@ -44,22 +42,24 @@ class Option(Asset):
         :param option_price: float -- for computing implied strike
         """
         # Expiration must be done first, in case implied strike needs to be calculated.
-        self._instantiate_expiration(market)
-        self._instantiate_strike(market, option_price)
+        self.expiration = self._calculate_expiration(market)
+        self.strike = self._calculate_strike(market, option_price)
         return self
 
-    def _instantiate_expiration(self, market):
+    def _calculate_expiration(self, market):
         """Compute expiration as market date + tenor
         :param market: dict
         """
         date = pd.Timestamp(market['date'])
-        if self.expiration is None:
+        expiration = self.expiration
+        if expiration is None:
             if isinstance(self.tenor, (np.float64, float, int)):
-                self.expiration = date + pd.Timedelta('365 Days') * self.tenor
+                expiration = date + pd.Timedelta('365 Days') * self.tenor
             else:
-                self.expiration = pd.Timestamp(market['date']) + to_offset(self.tenor)
+                expiration = pd.Timestamp(market['date']) + to_offset(self.tenor)
+        return expiration
         
-    def _instantiate_strike(self, market, option_price=None):
+    def _calculate_strike(self, market, option_price=None):
         """Compute strike as percent of spot or as implied from an option_price.
         :param market: dict
         :param option_price: float -- for computing implied strike
@@ -74,18 +74,19 @@ class Option(Asset):
             rate = market['discount_rates']
             div_rate = market.get('div_rates', {}).get(self.underlyer, 0)
             volatility = market['volatilities'][self.underlyer]
-            self.strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
+            strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
                                          volatility, div_rate, self.option_type)
         elif self.moneyness is not None:
             if isinstance(self.moneyness, (np.float64, float, int)):
-                self.strike = spot_price * self.moneyness
+                strike = spot_price * self.moneyness
             else:
                 moneyness = 0.01 * float(self.moneyness[:-1])  # drop '%'
-                self.strike = spot_price * moneyness
+                strike = spot_price * moneyness
         elif isinstance(strike, (np.float64, float, int)):
             pass                # strike is unchanged
         else:
             raise ValueError(f'Either strike or moneyness must be specified')
+        return strike
 
     def time_to_expiry(self, date):
         date = pd.Timestamp(date)
