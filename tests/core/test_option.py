@@ -79,10 +79,11 @@ class TestOption(unittest.TestCase):
 
     def test_instantiate_implied_strike(self):
         market = self.market
-        target = Option('test', 'SPY', 'call', '1/1/2024', strike=408).reprice(market)
+        target = Option('test', 'SPY', 'call', '1/1/2024', strike=408)
+        target_price = target.reprice(market)
         option = Option('test', 'SPY', 'call', '1/1/2024', strike='implied')
-        option.instantiate(market, option_price=target.price)
-        self.assertAlmostEqual(option.strike, 408)
+        option.instantiate(market, option_price=target_price.price)
+        self.assertAlmostEqual(option.strike, target.strike)
 
     def test_instantiate_with_float_tenor(self):
         market = self.market
