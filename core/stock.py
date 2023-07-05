@@ -54,7 +54,7 @@ if __name__ == '__main__':
               'date': date,
               'dividends': {ticker: dividends}}
 
-    stock = Stock(ticker).initialize(market)
+    stock = Stock(ticker)
     print(f'stock: {stock.to_string()}')
     print(f'dividends:\n{dividends}')
     print(f'PriceResult:\n{stock.reprice(market).to_string()}')

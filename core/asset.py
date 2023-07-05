@@ -1,6 +1,5 @@
 """Base class for assets"""
 from abc import ABC, abstractmethod
-import re
 import pandas as pd
 
 
@@ -10,17 +9,15 @@ class Asset(ABC):
         """Core initialization"""
         self.name = name
 
+    def instantiate(self, market, **_kwargs):
+        """Instantiate any market-dependent attributes.
+        """
+
     @abstractmethod
     def reprice(self, market) -> None:
         """Reprice class using data found in market object
         :param market: dict
         """
-
-    def initialize(self, market, **_kwargs):
-        """Use the market and other parameters to initialize class
-        :param market: dict
-        """
-        return self
 
     def compute_accrued_income(self, market, initial_date):
         return 0
