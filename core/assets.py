@@ -16,7 +16,6 @@ class Assets:
             assets = {**assets, **stock_assets}
         self.assets = assets
                 
-
     def add_asset(self, name, asset):
         self.assets[name] = asset
     
