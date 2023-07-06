@@ -1,3 +1,4 @@
+from pyport.core.assets import Assets
 from pyport.core.asset import Asset, AssetPrice
 from pyport.core.option import Option
 from pyport.core.stock import Stock

@@ -10,7 +10,10 @@ Assets - maintains dictionary of assets indexed by symbol
        - register asset prices with Market. (Typically done every period in backtest)
        - purpose: Isolate rest of portfolio system from asset details/repricing.
 
-Market - read/load historical stock, interest rate and dividends paid
+Market - read/load historical stocks, options, interest rate and dividends paid
+         - stocks specified by symbol
+	 - options specified by underlyer or symbol
+	 - rates specified by term
        - maintain historical and snapshot ("current") data
        - calculate value-added items like volatility or projected dividend rates
        - handle register requests for custom assets
