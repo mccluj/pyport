@@ -2,7 +2,7 @@
 import sys
 import argparse
 import pandas as pd
-from pyport import Asset, AssetPrice
+from pyport.core.asset import Asset, AssetPrice
 
 
 class Stock(Asset):

@@ -9,12 +9,19 @@ class TestAssets(unittest.TestCase):
     def setUp(self):
         self.market = {'date': '1/1/2023', 'spot_prices': {'SPY': 400, 'AGG': 50}}
 
-    def test_constructor(self):
+    def test_null_constructor(self):
         assets = Assets()
         assert not assets.assets
+    
+    def test_constructor_with_assets(self):
         stock_assets = {'xyz': Stock('XYZ')}
         assets = Assets(assets=stock_assets)
         assert assets.assets == stock_assets
+        
+    def test_constructor_with_stocks(self):
+        stocks = ['SPY', 'AGG']
+        assets = Assets(stocks=stocks)
+        assert sorted(assets.assets.keys()) == sorted(stocks)
 
     def test_add_asset(self):
         pass

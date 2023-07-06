@@ -1,5 +1,6 @@
 """Assets -- Asset container class"""
 import pandas as pd
+from pyport.core.stock import Stock
 
 
 class Assets:
@@ -11,8 +12,8 @@ class Assets:
         if assets is None:
             assets = {}
         if stocks is not None:
-            for symbol in stocks:
-                assets[symbol] = Stock(symbol)
+            stock_assets = {name: Stock(name) for name in stocks}
+            assets = {**assets, **stock_assets}
         self.assets = assets
                 
 
