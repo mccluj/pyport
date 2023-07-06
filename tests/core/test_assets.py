@@ -23,5 +23,11 @@ class TestAssets(unittest.TestCase):
         assets = Assets(stocks=stocks)
         assert sorted(assets.assets.keys()) == sorted(stocks)
 
+    def test_constructor_with_assets_and_stocks(self):
+        stocks = ['SPY', 'AGG']
+        stock_assets = {'xyz': Stock('XYZ')}
+        assets = Assets(assets=stock_assets, stocks=stocks)
+        assert sorted(assets.assets.keys()) == sorted(stocks + list(stock_assets))
+
     def test_add_asset(self):
         pass
