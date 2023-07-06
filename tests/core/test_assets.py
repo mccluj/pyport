@@ -1,5 +1,6 @@
 """Test pricing for assets."""
 import unittest
+import pytest
 import pandas as pd
 from pandas.testing import assert_series_equal
 from pyport import Stock, Assets
@@ -30,4 +31,19 @@ class TestAssets(unittest.TestCase):
         assert sorted(assets.assets.keys()) == sorted(stocks + list(stock_assets))
 
     def test_add_asset(self):
-        pass
+        stocks = ['SPY', 'AGG']
+        assets = Assets(stocks=stocks)
+        assets.add_asset('xyz', Stock('XYZ'))
+        assert sorted(assets.assets.keys()) == sorted(stocks + ['xyz'])
+
+    def test_remove_asset_fail(self):
+        stocks = ['SPY', 'AGG']
+        assets = Assets(stocks=stocks)
+        with pytest.raises(KeyError):
+            assets.remove_asset('xyz')
+
+    def test_remove_asset_success(self):
+        stocks = ['SPY', 'AGG']
+        assets = Assets(stocks=stocks)
+        assets.remove_asset('AGG')
+        assert list(assets.assets) == ['SPY']

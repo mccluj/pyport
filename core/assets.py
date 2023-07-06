@@ -21,6 +21,6 @@ class Assets:
         self.assets[name] = asset
     
     def remove_asset(self, name):
-        del self.asset[name]
+        del self.assets[name]
 
     
