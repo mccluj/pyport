@@ -10,11 +10,24 @@ Assets - maintains dictionary of assets indexed by symbol
        - register asset prices with Market. (Typically done every period in backtest)
        - purpose: Isolate rest of portfolio system from asset details/repricing.
 
-Market - read/load historical stocks, options, interest rate and dividends paid
+Market - maintain historical and snapshot ("current") data
+         - historical:
+	   stock "total return" prices # pd.DataFrame
+	   stock spot prices	       # pd.DataFrame
+	   dividends -- computed from total return and spot prices # pd.DataFrame
+	   div_rates -- rolling dividend averages (may prefer perfect foresight of dividends)
+	   volatility - rolling std() # pd.DataFrame
+	   vol_surfaces -- GS Data format
+	   discount rates -- Federal reserve 6mo, 1yr daily rates
+         - snapshot:
+	   stock spot prices -- pd.Series
+	   volatility -- flat or surface
+	   div_rates -- pd.Series
+       - read/load historical stocks, options, interest rate and dividends paid
          - stocks specified by symbol
 	 - options specified by underlyer or symbol
 	 - rates specified by term
-       - maintain historical and snapshot ("current") data
+       
        - calculate value-added items like volatility or projected dividend rates
        - handle register requests for custom assets
        - purpose: repository of market data for all asset repricing

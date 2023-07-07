@@ -8,3 +8,4 @@ from pyport.core.portfolio import Portfolio
 from pyport.core.basket import Basket
 from pyport.core.strategy import Strategy
 from pyport.core.holdings_portfolio import HoldingsPortfolio
+from pyport.core.market import Market
