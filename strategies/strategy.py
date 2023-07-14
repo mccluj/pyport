@@ -13,5 +13,14 @@ class Strategy:
         pass
 
     @abstractmethod
-    def generate_portfolio_holdings(context) -> Holdings:
+    def generate_portfolio_target(context) -> pd.Series:
         pass
+
+    @staticmethod
+    def target_from_weights(weights, aum, market, assets):
+        aum = portfolio.aum
+        allocations = aum * weights
+        assets = assets.reindex(weights.index)
+        prices = assets.apply(lambda asset: asset.reprice(market).price)
+        target = allocations.div(prices)
+        return target

@@ -24,7 +24,7 @@ class FixedWeightStrategy:
         deviation = actual.sub(target).abs().sum()
         return deviation > self.maximum_deviation
 
-    def generate_portfolio_holdings(self, context):
+    def generate_portfolio_target(self, context):
         portfolio = context['portfolio']
         assets = context['assets']
         symbols = assets.keys()
