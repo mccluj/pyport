@@ -1,5 +1,6 @@
 """Market class"""
 import os
+import numpy as np
 import pandas as pd
 
 
@@ -17,8 +18,8 @@ class Market:
     def _initialize(self, config):
         bars = Market.load_stock_bars(config['stocks'])
         self.stock_vols = Market.calculate_volatilities(bars, config['volatilities'])
-        self.dividends = Market.calculate_dividends(bars, config['dividends'])
-        self.stock_div_rates = Market.calculate_div_rates(self.dividends, config['div_rates'])
+        self.dividends = Market.calculate_dividends(bars)
+        self.stock_div_rates = Market.calculate_div_rates(bars, config.get('div_rates', {}))
         self.stock_bars = bars
 
     @staticmethod
@@ -45,7 +46,7 @@ class Market:
         :param config: dict
         :return pd.Series -- annual vols by symbol
         """
-        span = config['volatility_window']
+        span = config['window']
         field = config.get('price_field', 'Adj Close')
         results = {}
         for symbol, frame in bars.items():
@@ -55,7 +56,7 @@ class Market:
         return pd.Series(results)
 
     @staticmethod
-    def calculate_dividends(bars, config):
+    def calculate_dividends(bars):
         """Return implied dividends from adjusted and unadjusted closes.
         :param bars: dict -- {symbol: pd.DataFrame(ohlcav)}
         :return: dict -- {symbol: pd.Series)
@@ -82,8 +83,8 @@ class Market:
         for symbol, _bars in bars.items():
             price_returns = _bars.close.pct_change()
             total_returns = _bars.adj_close.pct_change()
-            pr_mean = total_returns.rolling(window, min_periods=min_periods).mean()
-            tr_mean = price_returns.rolling(window, min_periods=min_periods).mean()
+            pr_mean = price_returns.rolling(window, min_periods=min_periods).mean()
+            tr_mean = total_returns.rolling(window, min_periods=min_periods).mean()
             div_rates[symbol] = 252 * (tr_mean - pr_mean).fillna(0)
         return div_rates
 
