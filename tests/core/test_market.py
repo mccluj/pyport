@@ -2,8 +2,8 @@
 import unittest
 import pytest
 import os
-import numpy as np
 import pandas as pd
+from pandas.testing import assert_series_equal
 import pyport
 from pyport import Market
 from pprint import pprint
@@ -40,4 +40,4 @@ class TestMarket(unittest.TestCase):
         bars = self.bars[ticker]
         lhs = (bars.close + dividends) / bars.close.shift()
         rhs = bars.adj_close / bars.adj_close.shift()
-        assert all(np.isclose(lhs.iloc[1:], rhs.iloc[1:]))
+        assert_series_equal(lhs, rhs, check_names=False)
