@@ -14,11 +14,13 @@ class TestOption(unittest.TestCase):
                        'div_rates': {'SPY': 0.016},
                        'volatilities': {'SPY': 0.20},
                        }
+        self.put_option = Option('put', 'SPY', 'put', '1/1/2024', 400)
+        self.call_option = Option('call', 'SPY', 'call', '1/1/2024', 400)
 
     def test_put_call_parity(self):
         strike = 400
-        call = Option('spy_call', 'SPY', 'call', '1/1/2024', strike).reprice(self.market)
-        put = Option('spy_put', 'SPY', 'put', '1/1/2024', strike).reprice(self.market)
+        call = self.call_option.reprice(self.market)
+        put = self.put_option.reprice(self.market)
         stock = self.market['prices']['SPY']
         discount = self.market['discount_rates']
         div_rate = self.market['div_rates']['SPY']
@@ -26,64 +28,56 @@ class TestOption(unittest.TestCase):
         self.assertAlmostEqual(call.price - put.price, forward)
         
     def test_equality(self):
-        option_1 = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
-        option_2 = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
-        option_3 = Option('spy_put', 'SPY', 'put', '1/1/2024', 400)
-        assert option_1 == option_2
-        assert option_2 != option_3
+        option_1 = Option('call', 'SPY', 'call', '1/1/2024', 400)
+        assert option_1 == self.call_option
+        assert self.call_option != self.put_option
 
     def test_time_to_expiry(self):
-        option = Option('test', 'SPY', 'call', '1/1/2024', 400)
+        option = self.call_option
         self.assertAlmostEqual(option.time_to_expiry('1/1/2023'), 1.0)
 
-    def test_to_string(self):
-        option = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
-        assert option.to_string() == 'Option(spy_call)'
-
     def test_option_reprice(self):
-        pricing_info = Option('spy_call', 'SPY', 'call', '1/1/2024', 400).reprice(self.market)
-        assert pricing_info.to_string() == 'spy_call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
+        pricing_info = self.call_option.reprice(self.market)
+        assert pricing_info.to_string() == 'call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
 
     def test_rename(self):
-        option = Option('spy_call', 'SPY', 'call', '1/1/2024', 400)
-        assert option.name == 'spy_call'
+        option = self.call_option
+        assert option.name == 'call'
         option.rename('dummy')
         assert option.name == 'dummy'
-        option.rename()
-        assert option.name == 'SPY_20240101_400.00_call'
+
+    def test_identifier(self):
+        assert self.call_option.to_string() == 'SPY_20240101_400.00_call'
 
     def test_to_string(self):
-        option = Option('test', 'SPY', 'call', '1/1/2024', strike=400)
-        assert option.to_string() == 'SPY_20240101_400.00_call'
+        assert self.call_option.to_string() == 'SPY_20240101_400.00_call'
 
-    def test_instantiate_strike_value_error(self):
+    def test_calculate_strike_error(self):
         market = self.market
-        option = Option('test', 'SPY', 'call', '1/1/2024')
-        assert option.strike is None
         with pytest.raises(ValueError) as excinfo:
-            _ = option._calculate_strike(market)
-        assert str(excinfo.value) == 'Either strike or moneyness must be specified'
+            _ = Option._calculate_strike(market)
+        assert str(excinfo.value) == "Either 'strike', 'moneyness' or 'implied' must be specified"
         
-    def test_instantiate_strike_percent_of_spot(self):
+    def test_calculate_strike_with_moneyness(self):
         market = self.market
-        option = Option('test', 'SPY', 'call', '1/1/2024', moneyness=1.02).instantiate(market)
-        assert option.strike == 408
-        option = Option('test', 'SPY', 'call', '1/1/2024', moneyness='102%').instantiate(market)
-        assert option.strike == 408
+        strike = Option._calculate_strike(market, underlyer='SPY', moneyness=1.02)
+        assert strike == 408
+        strike = Option._calculate_strike(market, underlyer='SPY', moneyness='102%')
+        assert strike == 408
 
-    def test_instantiate_implied_strike_missing_option_price(self):
+    def test_calculate_implied_strike_missing_target_price(self):
         market = self.market
         with pytest.raises(ValueError) as excinfo:
-            _ = Option('test', 'SPY', 'call', '1/1/2024', strike='implied').instantiate(market)
+            _ = Option._calculate_strike(market, underlyer='SPY', implied=True)
         assert str(excinfo.value) == 'missing option_price implied strike calculation'
 
-    def test_instantiate_implied_strike(self):
+    def test_calculate_implied_strike(self):
         market = self.market
         target = Option('test', 'SPY', 'call', '1/1/2024', strike=408)
-        target_price = target.reprice(market)
-        option = Option('test', 'SPY', 'call', '1/1/2024', strike='implied')
-        option.instantiate(market, option_price=target_price.price)
-        self.assertAlmostEqual(option.strike, target.strike)
+        target_price = target.reprice(market).price
+        candidate = self.call_option
+        strike = Option._calculate_strike(market, implied=True, candidate=candidate, target_price=target_price)
+        self.assertAlmostEqual(strike, target.strike)
 
     def test_instantiate_with_float_tenor(self):
         market = self.market

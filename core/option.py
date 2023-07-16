@@ -34,8 +34,7 @@ class Option(Asset):
         option_type (str): Option type, either "put" or "call".
         expiration (pd.Timestamp or None): Expiration date of the option.
         strike (float or "implied"): Strike price of the option.
-        moneyness (float or None): Moneyness of the option as a decimal percent of spot.
-        tenor (float or str or None): Tenor of the option in years or as a pandas frequency.
+        identifier: string representation of the option. 
 
     Methods:
         __init__(name, underlyer, option_type, expiration, strike, moneyness, tenor): Initialize the Option object.
@@ -49,100 +48,122 @@ class Option(Asset):
         to_string(indent): Return a string representation of the option.
     """
 
-    def __init__(self, name, underlyer, option_type, expiration=None, strike=None,
-                 moneyness=None, tenor=None):
+    def __init__(self, name, underlyer, option_type, expiration, strike):
         """
         Initialize the Option object.
 
         :param name: str - Name of the option.
         :param underlyer: str - Underlying asset of the option.
-        :param option_type: str - Option type, either "put" or "call".
-        :param expiration: date object or None - Expiration date of the option.
-        :param strike: float or "implied" - Strike price of the option.
-        :param moneyness: float or None - Moneyness of the option as a decimal percent of spot.
-        :param tenor: float or str or None - Tenor of the option in years or as a pandas frequency.
+        :param option_type: str - "put" or "call".
+        :param expiration: date
+        :param strike: float
         """
         super().__init__(name)
         self.underlyer = underlyer
         self.option_type = option_type
-        if expiration is not None:
-            self.expiration = pd.Timestamp(expiration)
-        else:
-            self.expiration = expiration
         self.strike = strike
-        self.moneyness = moneyness
-        self.tenor = tenor
-
-    def rename(self, name=None):
+        self.expiration = pd.Timestamp(expiration)
+        self.identifier = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
+        
+    def rename(self, name):
         """
         Rename the Option object.
 
-        :param name: str or None - New name of the option. If None, a name is derived from the option terms.
+        :param name: str - New name for the option.
         :return: None
         """
-        if name is None:
-            name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
 
-    def instantiate(self, market, **kwargs):
-        """
-        Define option attributes based on current market levels.
+    @classmethod
+    def instantiate_from_market(cls, market, name, **kwargs):
+        underlyer = kwargs['underlyer']
+        option_type = kwargs['option_type']
+        expiration = self._calculate_expiration(market, **kwargs)
+        candidate = Option(name, underlyer, option_type, expiration, None)
+        strike = self._calculate_strike(market, candidate=candidate, **kwargs)
+        return Option(name, underlyer, option_type, expiration, strike)
 
-        :param market: dict - Current market data.
-        :param option_price: float or None - Option price for calculating implied strike.
-        :return: self
-        """
-        # Expiration must be done first, in case implied strike needs to be calculated.
-        self.expiration = self._calculate_expiration(market)
-        self.strike = self._calculate_strike(market, kwargs.get('option_price'))
-        return self
-
-    def _calculate_expiration(self, market):
-        """
-        Compute the expiration date of the option.
-
-        :param market: dict - Current market data.
-        :return: pd.Timestamp - Expiration date.
-        """
-        date = pd.Timestamp(market['date'])
-        expiration = self.expiration
-        if expiration is None:
-            if isinstance(self.tenor, (np.float64, float, int)):
-                expiration = date + pd.Timedelta('365 Days') * self.tenor
+    @staticmethod
+    def _calculate_expiration(market, **kwargs):
+        """Calculate expiration from 'expiration' or 'tenor'."""
+        if 'expiration' in kwargs:
+            expiration = kwargs['expiration']
+        elif 'tenor' in kwargs:
+            tenor = kwargs['tenor']
+            if isinstance(tenor, (np.float64, float, int)):
+                expiration = date + pd.Timedelta('365 Days') * tenor
             else:
-                expiration = pd.Timestamp(market['date']) + to_offset(self.tenor)
-        return expiration
-
-    def _calculate_strike(self, market, option_price=None):
-        """
-        Compute the strike price of the option.
-
-        :param market: dict - Current market data.
-        :param option_price: float or None - Option price for calculating implied strike.
-        :return: float - Strike price.
-        """
-        strike = self.strike
-        spot_price = market['prices'][self.underlyer]
-        date = pd.Timestamp(market['date'])
-        if strike == 'implied':
-            if option_price is None:
-                raise ValueError('missing option_price implied strike calculation')
-            rate = market['discount_rates']
-            div_rate = market.get('div_rates', {}).get(self.underlyer, 0)
-            volatility = market['volatilities'][self.underlyer]
-            strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
-                                         volatility, div_rate, self.option_type)
-        elif self.moneyness is not None:
-            if isinstance(self.moneyness, (np.float64, float, int)):
-                strike = spot_price * self.moneyness
-            else:
-                moneyness = 0.01 * float(self.moneyness[:-1])  # drop '%'
-                strike = spot_price * moneyness
-        elif isinstance(strike, (np.float64, float, int)):
-            pass                # strike is unchanged
+                expiration = pd.Timestamp(market['date']) + to_offset(tenor)
         else:
-            raise ValueError('Either strike or moneyness must be specified')
+            raise ValueError('Either expiration or tenor must be specified')
+
+    @staticmethod
+    def _calculate_strike(market, **kwargs):
+        """Calculate strike from 'strike', 'moneyness' or 'implied'.
+        :param strike: float (Optional)
+        :param moneyness: float or str (Optional) -- percent of spot. '%' allowed at the end for clarity.
+        :param implied: bool (Optional) -- if True compute implied strike
+        :param target_price: float (Optional) -- target option price if computing implied strike.
+        :param candidate: Option (Optional) -- for implied strike, Option with all terms except strike.
+        :return: float
+        """
+        if 'strike' in kwargs:
+            strike = kwargs['strike']
+        elif 'moneyness' in kwargs:
+            moneyness = kwargs['moneyness']
+            if isinstance(moneyness, str):
+                moneyness = 0.01 * float(moneyness.strip('%'))
+            else:
+                moneyness = float(moneyness)
+            underlyer = kwargs['underlyer']
+            spot = market['prices'][underlyer]
+            strike = moneyness * spot
+        elif kwargs.get('implied', False) == True:
+            target_price = kwargs['target_price']
+            candidate = kwargs['candidate']
+            underlyer = candidate.underlyer
+            option_type = candidate.option_type
+            date = pd.Timestamp(market['date'])
+            tenor = candidate.time_to_expiry(date)
+            rate = market['discount_rates']
+            spot = market['prices'][underlyer]
+            div_rate = market.get('div_rates', {}).get(underlyer, 0)
+            volatility = market['volatilities'][underlyer]
+            strike = implied_strike(target_price, spot, rate, tenor, volatility, div_rate, option_type)
+        else:
+            raise ValueError("Either 'strike', 'moneyness' or 'implied' must be specified")
         return strike
+
+    # def _calculate_strike(self, market, option_price=None):
+    #     """
+    #     Compute the strike price of the option.
+
+    #     :param market: dict - Current market data.
+    #     :param option_price: float or None - Option price for calculating implied strike.
+    #     :return: float - Strike price.
+    #     """
+    #     strike = self.strike
+    #     spot_price = market['prices'][self.underlyer]
+    #     date = pd.Timestamp(market['date'])
+    #     if strike == 'implied':
+    #         if option_price is None:
+    #             raise ValueError('missing option_price implied strike calculation')
+    #         rate = market['discount_rates']
+    #         div_rate = market.get('div_rates', {}).get(self.underlyer, 0)
+    #         volatility = market['volatilities'][self.underlyer]
+    #         strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
+    #                                      volatility, div_rate, self.option_type)
+    #     elif self.moneyness is not None:
+    #         if isinstance(self.moneyness, (np.float64, float, int)):
+    #             strike = spot_price * self.moneyness
+    #         else:
+    #             moneyness = 0.01 * float(self.moneyness[:-1])  # drop '%'
+    #             strike = spot_price * moneyness
+    #     elif isinstance(strike, (np.float64, float, int)):
+    #         pass                # strike is unchanged
+    #     else:
+    #         raise ValueError('Either strike or moneyness must be specified')
+    #     return strike
 
     def time_to_expiry(self, date):
         """
@@ -189,7 +210,7 @@ class Option(Asset):
         :param indent: int - Indentation level.
         :return: str - String representation of the option.
         """
-        return f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
+        return self.identifier
 
 
 class OptionPrice(AssetPrice):
