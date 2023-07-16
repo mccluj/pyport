@@ -4,7 +4,7 @@ Asset - Stock, Option, Bond, Basket
       - constructor for bespoke assets,
       - purpose: encapsulate all asset specific tasks
 
-Assets - maintains dictionary of assets indexed by symbol
+AssetManager - maintains dictionary of assets indexed by symbol
        - handle register/deregister asset requests from portfolio system
        - handles repricing assets
        - register asset prices with Market. (Typically done every period in backtest)

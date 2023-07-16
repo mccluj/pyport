@@ -1,9 +1,9 @@
-"""Assets -- Asset container class"""
+"""AssetManager -- Asset container class"""
 import pandas as pd
 from pyport.core.stock import Stock
 
 
-class Assets:
+class AssetManager:
     def __init__(self, assets=None, stocks=None):
         """
         :param assets: dict -- {symbol: Asset}
