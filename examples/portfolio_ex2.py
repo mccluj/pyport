@@ -36,13 +36,13 @@ def main():
     market = config['current_market']
     market['prices'] = pd.Series(market['prices'])
     target = pd.Series(config['targets'])
-    option = Option(*config['options'][0])
-    price_data = option.reprice(market)
     # Initial portfolio pricing
     portfolio = Portfolio(cash=config['portfolio']['cash'])
     portfolio.rebalance(market, target)
     print(portfolio.to_string())
     # Update market price for option
+    option = Option(*config['options'][0])
+    price_data = option.reprice(market)
     market['prices']['SPY_put'] = price_data.price
     portfolio.mark_positions(market['prices'])
     print(portfolio.to_string())
