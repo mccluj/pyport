@@ -69,9 +69,9 @@ class TestOption(unittest.TestCase):
 
     def test_calculate_implied_strike_missing_target_price(self):
         market = self.market
-        with pytest.raises(ValueError) as excinfo:
+        with pytest.raises(KeyError) as excinfo:
             _ = Option._calculate_strike(market, underlyer='SPY', implied=True)
-        assert str(excinfo.value) == 'missing option_price implied strike calculation'
+        assert str(excinfo.value) == "'target_price'"
 
     def test_calculate_implied_strike(self):
         market = self.market
