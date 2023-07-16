@@ -38,13 +38,15 @@ class Basket(Asset):
         return Basket(name, shares)
 
     def reprice(self, market):
-        assets = market.assets.reindex(allocations.index)
-        asset_prices = assets.apply(lambda asset: asset.reprice(market).price)
-        price = self.shares @ assets_prices
-        return BasketPrice(self.name, market['date'], price)
+        shares = self.shares
+        asset_prices = market.prices.reindex(shares.index)
+        asset_data = pd.concat([shares, asset_prices], axis=1, keys=['shares', 'price'])
+        price = shares @ assets_prices
+        return BasketPrice(self.name, market['date'], price, asset_data)
 
 
 
 class BasketPrice(AssetPrice):
-    def __init__(self, name, date, price, asset_prices, shares):
-        pass
+    def __init__(self, name, date, price, asset_data):
+        super().__init__(name, date, **kwargs)
+        self.asset_data = asset_data

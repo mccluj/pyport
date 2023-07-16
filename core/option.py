@@ -145,37 +145,6 @@ class Option(Asset):
             raise ValueError("Either 'strike' or 'moneyness' must be specified")
         return strike
 
-    # def _calculate_strike(self, market, option_price=None):
-    #     """
-    #     Compute the strike price of the option.
-
-    #     :param market: dict - Current market data.
-    #     :param option_price: float or None - Option price for calculating implied strike.
-    #     :return: float - Strike price.
-    #     """
-    #     strike = self.strike
-    #     spot_price = market['prices'][self.underlyer]
-    #     date = pd.Timestamp(market['date'])
-    #     if strike == 'implied':
-    #         if option_price is None:
-    #             raise ValueError('missing option_price implied strike calculation')
-    #         rate = market['discount_rates']
-    #         div_rate = market.get('div_rates', {}).get(self.underlyer, 0)
-    #         volatility = market['volatilities'][self.underlyer]
-    #         strike = implied_strike(option_price, spot_price, rate, self.time_to_expiry(date),
-    #                                      volatility, div_rate, self.option_type)
-    #     elif self.moneyness is not None:
-    #         if isinstance(self.moneyness, (np.float64, float, int)):
-    #             strike = spot_price * self.moneyness
-    #         else:
-    #             moneyness = 0.01 * float(self.moneyness[:-1])  # drop '%'
-    #             strike = spot_price * moneyness
-    #     elif isinstance(strike, (np.float64, float, int)):
-    #         pass                # strike is unchanged
-    #     else:
-    #         raise ValueError('Either strike or moneyness must be specified')
-    #     return strike
-
     def time_to_expiry(self, date):
         """
         Calculate the time to expiration in years.
