@@ -1,7 +1,7 @@
 """Test of Basket class"""
 import unittest
 import pandas as pd
-from pandas.testing import assert_series_equal
+from pandas.testing import assert_series_equal, assert_frame_equal
 from pyport import Stock, Basket
 from argparse import Namespace
 
@@ -23,10 +23,27 @@ class TestBasket(unittest.TestCase):
     def test_instantiate_from_weights(self):
         basket = Basket.instantiate_from_market(self.market, 'basket',
                                                 weights=self.weights, target_value=self.target_value)
-        expected = self.weights * self.target_value / pd.Series(self.market['prices'])
-        assert_series_equal(basket.shares, expected)
+        expected_shares = self.weights * self.target_value / pd.Series(self.market['prices'])
+        assert_series_equal(basket.shares, expected_shares)
 
     def test_instantiate_from_shares(self):
         basket = Basket.instantiate_from_market(self.market, 'basket', shares=self.shares)
-        expected = self.shares
-        assert_series_equal(basket.shares, expected)
+        expected_shares = self.shares
+        assert_series_equal(basket.shares, expected_shares)
+
+    def test_instantiate_from_shares_and_weights(self):
+        """Verify shares take precendence"""
+        basket = Basket.instantiate_from_market(self.market, 'basket', shares=self.shares,
+                                                weights=self.weights, target_value=self.target_value)
+        expected_shares = self.shares
+        assert_series_equal(basket.shares, expected_shares)
+
+    def test_reprice(self):
+        basket = Basket('test', self.shares)
+        data = basket.reprice(self.market)
+        expected_price = 1800
+        expected_frame = pd.DataFrame([[10, 100], [20, 40]], index=['SPY', 'XYZ'], columns=['shares', 'price'])
+        self.assertAlmostEqual(data.price, expected_price)
+        assert_frame_equal(data.asset_data, expected_frame)
+
+        
