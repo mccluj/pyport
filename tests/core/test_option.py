@@ -99,6 +99,6 @@ class TestOption(unittest.TestCase):
         market = self.market
         target = Option('test', 'SPY', 'call', '12/31/2023', strike=408).reprice(market)
         option = (Option('test', 'SPY', 'call', strike='implied', tenor='A')
-                  .instantiate(market, target.price))
+                  .instantiate(market, option_price=target.price))
         assert option.expiration == pd.Timestamp('12/31/2023')
         self.assertAlmostEqual(option.strike, 408)

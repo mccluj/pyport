@@ -17,8 +17,9 @@ Date: July 2023
 """
 
 from math import exp, log, sqrt
-from scipy.stats import norm
 import numpy as np
+from scipy.stats import norm
+from scipy.optimize import brentq
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
 from pyport.core.asset import Asset, AssetPrice
@@ -71,19 +72,19 @@ class Option(Asset):
         self.strike = strike
         self.moneyness = moneyness
         self.tenor = tenor
-        
+
     def rename(self, name=None):
         """
         Rename the Option object.
 
-        :param name: str or None - New name of the option. If None, the default naming convention is used.
+        :param name: str or None - New name of the option. If None, a name is derived from the option terms.
         :return: None
         """
         if name is None:
             name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
-        
-    def instantiate(self, market, option_price=None):
+
+    def instantiate(self, market, **kwargs):
         """
         Define option attributes based on current market levels.
 
@@ -93,7 +94,7 @@ class Option(Asset):
         """
         # Expiration must be done first, in case implied strike needs to be calculated.
         self.expiration = self._calculate_expiration(market)
-        self.strike = self._calculate_strike(market, option_price)
+        self.strike = self._calculate_strike(market, kwargs.get('option_price'))
         return self
 
     def _calculate_expiration(self, market):
@@ -111,7 +112,7 @@ class Option(Asset):
             else:
                 expiration = pd.Timestamp(market['date']) + to_offset(self.tenor)
         return expiration
-        
+
     def _calculate_strike(self, market, option_price=None):
         """
         Compute the strike price of the option.
@@ -140,7 +141,7 @@ class Option(Asset):
         elif isinstance(strike, (np.float64, float, int)):
             pass                # strike is unchanged
         else:
-            raise ValueError(f'Either strike or moneyness must be specified')
+            raise ValueError('Either strike or moneyness must be specified')
         return strike
 
     def time_to_expiry(self, date):
@@ -152,7 +153,7 @@ class Option(Asset):
         """
         date = pd.Timestamp(date)
         return (self.expiration - date) / pd.Timedelta('365 days')
-        
+
     def reprice(self, market):
         """
         Calculate the price of the option based on current market data.
@@ -170,7 +171,7 @@ class Option(Asset):
                              sigma, discount_rate, div_rate, self.option_type)
         data['und_price'] = spot_price
         return OptionPrice(name=self.name, date=date, **data)
-        
+
     def __eq__(self, other):
         """
         Compare two options for equality.
@@ -179,7 +180,7 @@ class Option(Asset):
         :return: bool - True if the options are equal, False otherwise.
         """
         attributes = ['name', 'underlyer', 'option_type', 'expiration', 'strike']
-        return all([getattr(self, key) == getattr(other, key) for key in attributes])
+        return all(getattr(self, key) == getattr(other, key) for key in attributes)
 
     def to_string(self, indent=0):
         """
@@ -189,7 +190,7 @@ class Option(Asset):
         :return: str - String representation of the option.
         """
         return f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
-        
+
 
 class OptionPrice(AssetPrice):
     """
@@ -214,12 +215,13 @@ class OptionPrice(AssetPrice):
 
         :param name: str - Name of the option price.
         :param date: date object - Date of the option price.
-        :param kwargs: dict - Keyword arguments for additional attributes (price, delta, gamma, vega, theta, rho, und_price).
+        :param kwargs: dict - Keyword arguments for additional attributes:
+                      (e.g. price, delta, gamma, vega, theta, rho, und_price).
         """
         super().__init__(name, date, **kwargs)
         for key in ['delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']:
             setattr(self, key, kwargs[key])
-        
+
     def to_string(self, delim=', '):
         """
         Return a string representation of the option price.
@@ -257,11 +259,10 @@ def implied_strike(price, S, r, T, sigma, q, option_type):
     interval_lower = max(epsilon, S * exp(-q * T) - S * exp(-r * T))
     interval_upper = S * exp(-q * T) + S * exp(-r * T)
     # Use a root-finding algorithm to find the implied strike
-    from scipy.optimize import brentq
     implied_strike = brentq(lambda K: black_scholes_strike(K) - price, interval_lower, interval_upper)
     return implied_strike
-                
-                
+
+
 def black_scholes(S, K, T, sigma, r, q, option_type):
     """
     Calculates the Black-Scholes option pricing model with Greeks.
@@ -282,11 +283,13 @@ def black_scholes(S, K, T, sigma, r, q, option_type):
     if option_type == 'call':
         price = S * exp(-q * T) * norm.cdf(d1) - K * exp(-r * T) * norm.cdf(d2)
         delta = exp(-q * T) * norm.cdf(d1)
-        theta = (-S * sigma * exp(-q * T) * norm.pdf(d1)) / (2 * sqrt(T)) - r * K * exp(-r * T) * norm.cdf(d2) + q * S * exp(-q * T) * norm.cdf(d1)
+        theta = ((-S * sigma * exp(-q * T) * norm.pdf(d1)) / (2 * sqrt(T))
+                 - r * K * exp(-r * T) * norm.cdf(d2) + q * S * exp(-q * T) * norm.cdf(d1))
     elif option_type == 'put':
         price = K * exp(-r * T) * norm.cdf(-d2) - S * exp(-q * T) * norm.cdf(-d1)
         delta = -exp(-q * T) * norm.cdf(-d1)
-        theta = (-S * sigma * exp(-q * T) * norm.pdf(d1)) / (2 * sqrt(T)) + r * K * exp(-r * T) * norm.cdf(-d2) - q * S * exp(-q * T) * norm.cdf(-d1)
+        theta = ((-S * sigma * exp(-q * T) * norm.pdf(d1)) / (2 * sqrt(T))
+                 + r * K * exp(-r * T) * norm.cdf(-d2) - q * S * exp(-q * T) * norm.cdf(-d1))
     else:
         raise ValueError("Invalid option_type. Must be either 'call' or 'put'.")
 

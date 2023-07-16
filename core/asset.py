@@ -34,5 +34,5 @@ class AssetPrice:
         self.date = pd.Timestamp(date)
         self.price = price
 
-    def to_string(self):
+    def to_string(self, delim=None):
         return f'Asset({self.name}, {self.date:%Y-%m-%d}, {self.price})'
