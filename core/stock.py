@@ -12,7 +12,7 @@ class Stock(Asset):
 
     def reprice(self, market):
         date = market['date']
-        price = market['spot_prices'][self.name]
+        price = market['prices'][self.name]
         return AssetPrice(name=self.name, date=date, price=price)
 
     def compute_accrued_income(self, market, acquisition_date):
@@ -50,7 +50,7 @@ if __name__ == '__main__':
         div_tokens = token.split(' ')
         div_date, div_amount = pd.Timestamp(div_tokens[0]), float(div_tokens[1])
         dividends[div_date] = div_amount
-    market = {'spot_prices': {ticker: price},
+    market = {'prices': {ticker: price},
               'date': date,
               'dividends': {ticker: dividends}}
 

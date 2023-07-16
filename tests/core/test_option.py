@@ -9,7 +9,7 @@ from pyport import Option
 class TestOption(unittest.TestCase):
     def setUp(self):
         self.market = {'date': '1/1/2023',
-                       'spot_prices': {'SPY': 400},
+                       'prices': {'SPY': 400},
                        'discount_rates': 0.05,
                        'div_rates': {'SPY': 0.016},
                        'volatilities': {'SPY': 0.20},
@@ -19,7 +19,7 @@ class TestOption(unittest.TestCase):
         strike = 400
         call = Option('spy_call', 'SPY', 'call', '1/1/2024', strike).reprice(self.market)
         put = Option('spy_put', 'SPY', 'put', '1/1/2024', strike).reprice(self.market)
-        stock = self.market['spot_prices']['SPY']
+        stock = self.market['prices']['SPY']
         discount = self.market['discount_rates']
         div_rate = self.market['div_rates']['SPY']
         forward = stock * np.exp(-div_rate) - strike * np.exp(-discount)

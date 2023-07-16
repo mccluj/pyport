@@ -8,7 +8,7 @@ from pyport import Stock, Assets
 
 class TestAssets(unittest.TestCase):
     def setUp(self):
-        self.market = {'date': '1/1/2023', 'spot_prices': {'SPY': 400, 'AGG': 50}}
+        self.market = {'date': '1/1/2023', 'prices': {'SPY': 400, 'AGG': 50}}
 
     def test_null_constructor(self):
         assets = Assets()

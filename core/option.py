@@ -122,7 +122,7 @@ class Option(Asset):
         :return: float - Strike price.
         """
         strike = self.strike
-        spot_price = market['spot_prices'][self.underlyer]
+        spot_price = market['prices'][self.underlyer]
         date = pd.Timestamp(market['date'])
         if strike == 'implied':
             if option_price is None:
@@ -163,7 +163,7 @@ class Option(Asset):
         """
         date = pd.Timestamp(market['date'])
         underlyer = self.underlyer
-        spot_price = market['spot_prices'][underlyer]
+        spot_price = market['prices'][underlyer]
         discount_rate = market['discount_rates']
         div_rate = market.get('div_rates', {}).get(underlyer, 0.0)
         sigma = market['volatilities'][underlyer]
