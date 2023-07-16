@@ -48,6 +48,8 @@ class TestOption(unittest.TestCase):
 
     def test_identifier(self):
         assert self.call_option.to_string() == 'SPY_20240101_400.00_call'
+        incomplete = Option('incomplete', None, None, None, None)
+        assert incomplete.identifier is None
 
     def test_to_string(self):
         assert self.call_option.to_string() == 'SPY_20240101_400.00_call'
@@ -79,20 +81,23 @@ class TestOption(unittest.TestCase):
         strike = Option._calculate_strike(market, implied=True, candidate=candidate, target_price=target_price)
         self.assertAlmostEqual(strike, target.strike)
 
-    def test_instantiate_with_float_tenor(self):
+    def test_calculate_expiration_with_float_tenor(self):
         market = self.market
-        option = Option('test', 'SPY', 'call', strike=400, tenor=1.0).instantiate(market)
-        assert option.expiration == pd.Timestamp('1/1/2024')
+        option = self.call_option
+        expiration = Option._calculate_expiration(market, tenor=1.0)
+        assert expiration == pd.Timestamp('1/1/2024')
 
-    def test_instantiate_with_string_tenor(self):
+    def test_calculate_expiration_with_string_tenor(self):
         market = self.market
-        option = Option('test', 'SPY', 'call', strike=400, tenor='A').instantiate(market)
-        assert option.expiration == pd.Timestamp('12/31/2023')
+        option = self.call_option
+        expiration = Option._calculate_expiration(market, tenor='A')
+        assert expiration == pd.Timestamp('12/31/2023')
 
     def test_instantiate_with_implied_and_tenor(self):
         market = self.market
         target = Option('test', 'SPY', 'call', '12/31/2023', strike=408).reprice(market)
-        option = (Option('test', 'SPY', 'call', strike='implied', tenor='A')
-                  .instantiate(market, option_price=target.price))
+        option = Option.instantiate_from_market(market, 'test', underlyer='SPY', option_type='call',
+                                                tenor='A',
+                                                implied=True, target_price=target.price)
         assert option.expiration == pd.Timestamp('12/31/2023')
         self.assertAlmostEqual(option.strike, 408)

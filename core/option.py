@@ -63,8 +63,11 @@ class Option(Asset):
         self.option_type = option_type
         self.strike = strike
         self.expiration = pd.Timestamp(expiration)
-        self.identifier = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
-        
+        try:
+            self.identifier = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
+        except:
+            self.identifier = None
+            
     def rename(self, name):
         """
         Rename the Option object.
@@ -78,24 +81,31 @@ class Option(Asset):
     def instantiate_from_market(cls, market, name, **kwargs):
         underlyer = kwargs['underlyer']
         option_type = kwargs['option_type']
-        expiration = self._calculate_expiration(market, **kwargs)
+        expiration = Option._calculate_expiration(market, **kwargs)
         candidate = Option(name, underlyer, option_type, expiration, None)
-        strike = self._calculate_strike(market, candidate=candidate, **kwargs)
+        strike = Option._calculate_strike(market, candidate=candidate, **kwargs)
         return Option(name, underlyer, option_type, expiration, strike)
 
     @staticmethod
     def _calculate_expiration(market, **kwargs):
-        """Calculate expiration from 'expiration' or 'tenor'."""
+        """Calculate expiration from 'expiration' or 'tenor'.
+        :param market: dict
+        :param expiration: date
+        :param tenor: float or str
+        :return: pd.Timestamp
+        """
         if 'expiration' in kwargs:
             expiration = kwargs['expiration']
         elif 'tenor' in kwargs:
             tenor = kwargs['tenor']
+            date = pd.Timestamp(market['date'])
             if isinstance(tenor, (np.float64, float, int)):
                 expiration = date + pd.Timedelta('365 Days') * tenor
             else:
-                expiration = pd.Timestamp(market['date']) + to_offset(tenor)
+                expiration = date + to_offset(tenor)
         else:
             raise ValueError('Either expiration or tenor must be specified')
+        return expiration
 
     @staticmethod
     def _calculate_strike(market, **kwargs):
