@@ -109,16 +109,17 @@ class Option(Asset):
 
     @staticmethod
     def _calculate_strike(market, **kwargs):
-        """Calculate strike from 'strike', 'moneyness' or 'implied'.
-        :param strike: float (Optional)
+        """Calculate strike from 'strike', 'moneyness' or 'implied'. Precedence in that order
+        if multiple choices provided.
+        :param strike: float or 'implied' (Optional)
         :param moneyness: float or str (Optional) -- percent of spot. '%' allowed at the end for clarity.
-        :param implied: bool (Optional) -- if True compute implied strike
         :param target_price: float (Optional) -- target option price if computing implied strike.
         :param candidate: Option (Optional) -- for implied strike, Option with all terms except strike.
         :return: float
         """
-        if 'strike' in kwargs:
-            strike = kwargs['strike']
+        strike = kwargs.get('strike')
+        if isinstance(strike, (float, int, np.float64)):
+            pass                # use strike as is
         elif 'moneyness' in kwargs:
             moneyness = kwargs['moneyness']
             if isinstance(moneyness, str):
@@ -128,7 +129,7 @@ class Option(Asset):
             underlyer = kwargs['underlyer']
             spot = market['prices'][underlyer]
             strike = moneyness * spot
-        elif kwargs.get('implied', False) == True:
+        elif strike == 'implied':
             target_price = kwargs['target_price']
             candidate = kwargs['candidate']
             underlyer = candidate.underlyer
@@ -141,7 +142,7 @@ class Option(Asset):
             volatility = market['volatilities'][underlyer]
             strike = implied_strike(target_price, spot, rate, tenor, volatility, div_rate, option_type)
         else:
-            raise ValueError("Either 'strike', 'moneyness' or 'implied' must be specified")
+            raise ValueError("Either 'strike' or 'moneyness' must be specified")
         return strike
 
     # def _calculate_strike(self, market, option_price=None):
