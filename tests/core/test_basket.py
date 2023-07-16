@@ -14,15 +14,13 @@ class TestBasket(unittest.TestCase):
                            date='1/1/2023')
         self.shares = pd.Series({'SPY': 10, 'XYZ': 20})
         self.weights = pd.Series({'SPY': 0.8, 'XYZ': 0.2})
-        self.aum = 10000
+        self.target_value = 10000
 
     def test_shares_constructor(self):
         basket = Basket('shares', shares=self.shares)
         assert_series_equal(basket.shares, self.shares)
 
     def test_weights_constructor(self):
-        basket = Basket('weights', weights=self.weights, aum=self.aum)
-        assert basket.shares is None
-        expected_shares = self.weights * self.aum / pd.Series(self.market['prices'])
-        basket = Basket('weights', weights=self.weights, aum=self.aum).instantiate(self.market)
+        basket = Basket.instantiate_from_market(self.market, 'weights', weights=self.weights, target_value=self.target_value)
+        expected_shares = self.weights * self.target_value / pd.Series(self.market['prices'])
         assert_series_equal(basket.shares, expected_shares)
