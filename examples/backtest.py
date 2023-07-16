@@ -114,7 +114,7 @@ class Backtest:
         self._setup_backtest(config)
 
     def _setup_portfolio(self, config):
-        self.portfolio = pyport.Portfolio(cash=config['initial_cash'])
+        self.portfolio = pyport.Portfolio(cash=config['portfolio']['initial_cash'])
 
     def _setup_strategy(self, config):
         self.strategy = pyport.Strategy(config=config['strategy'])

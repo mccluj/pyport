@@ -1,4 +1,21 @@
-"""Option class"""
+"""
+option.py - A module implementing the Option class and related functions for option pricing and calculations.
+
+The Option class represents an option contract and inherits from the Asset class.
+It provides methods to instantiate option attributes based on market levels, calculate expiration and strike,
+reprice the option based on current market data, and compare options for equality.
+
+The module also includes the OptionPrice class that inherits from the AssetPrice class.
+It represents the price of an option at a specific date and provides methods for string representation.
+
+The module includes the following functions:
+- implied_strike(price, S, r, T, sigma, q, option_type): Computes an option's implied strike given its option price.
+- black_scholes(S, K, T, sigma, r, q, option_type): Calculates the Black-Scholes option pricing model with Greeks.
+
+Author: John McClure
+Date: July 2023
+"""
+
 from math import exp, log, sqrt
 from scipy.stats import norm
 import numpy as np
@@ -6,17 +23,43 @@ import pandas as pd
 from pandas.tseries.frequencies import to_offset
 from pyport.core.asset import Asset, AssetPrice
 
+
 class Option(Asset):
+    """
+    The Option class represents an option contract.
+
+    Attributes:
+        underlyer (str): Underlying asset of the option.
+        option_type (str): Option type, either "put" or "call".
+        expiration (pd.Timestamp or None): Expiration date of the option.
+        strike (float or "implied"): Strike price of the option.
+        moneyness (float or None): Moneyness of the option as a decimal percent of spot.
+        tenor (float or str or None): Tenor of the option in years or as a pandas frequency.
+
+    Methods:
+        __init__(name, underlyer, option_type, expiration, strike, moneyness, tenor): Initialize the Option object.
+        rename(name): Rename the Option object.
+        instantiate(market, option_price): Define option attributes based on current market levels.
+        _calculate_expiration(market): Compute the expiration date of the option.
+        _calculate_strike(market, option_price): Compute the strike price of the option.
+        time_to_expiry(date): Calculate the time to expiration in years.
+        reprice(market): Calculate the price of the option based on current market data.
+        __eq__(other): Compare two options for equality.
+        to_string(indent): Return a string representation of the option.
+    """
+
     def __init__(self, name, underlyer, option_type, expiration=None, strike=None,
                  moneyness=None, tenor=None):
         """
-        :param name: str
-        :param underlyer: str
-        :param option_type: "put" or "call"
-        :param strike: float or "implied"
-        :param moneyness: float -- decimal percent of spot
-        :param expiration: date object
-        :param tenor: float(years) or str(pandas freq)
+        Initialize the Option object.
+
+        :param name: str - Name of the option.
+        :param underlyer: str - Underlying asset of the option.
+        :param option_type: str - Option type, either "put" or "call".
+        :param expiration: date object or None - Expiration date of the option.
+        :param strike: float or "implied" - Strike price of the option.
+        :param moneyness: float or None - Moneyness of the option as a decimal percent of spot.
+        :param tenor: float or str or None - Tenor of the option in years or as a pandas frequency.
         """
         super().__init__(name)
         self.underlyer = underlyer
@@ -30,16 +73,23 @@ class Option(Asset):
         self.tenor = tenor
         
     def rename(self, name=None):
+        """
+        Rename the Option object.
+
+        :param name: str or None - New name of the option. If None, the default naming convention is used.
+        :return: None
+        """
         if name is None:
             name = f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         super().__init__(name)
         
     def instantiate(self, market, option_price=None):
-        """Define option attributes based on current market levels. Alternatives:
-        expiration could be computed from market.date + time_delta from tenor frequency.
-        strike could be defined as a percent of spot or implied from an given option price.
-        :param market: dict
-        :param option_price: float -- for computing implied strike
+        """
+        Define option attributes based on current market levels.
+
+        :param market: dict - Current market data.
+        :param option_price: float or None - Option price for calculating implied strike.
+        :return: self
         """
         # Expiration must be done first, in case implied strike needs to be calculated.
         self.expiration = self._calculate_expiration(market)
@@ -47,8 +97,11 @@ class Option(Asset):
         return self
 
     def _calculate_expiration(self, market):
-        """Compute expiration as market date + tenor
-        :param market: dict
+        """
+        Compute the expiration date of the option.
+
+        :param market: dict - Current market data.
+        :return: pd.Timestamp - Expiration date.
         """
         date = pd.Timestamp(market['date'])
         expiration = self.expiration
@@ -60,10 +113,12 @@ class Option(Asset):
         return expiration
         
     def _calculate_strike(self, market, option_price=None):
-        """Compute strike as percent of spot or as implied from an option_price.
-        :param market: dict
-        :param option_price: float -- for computing implied strike
-        :return: float -- strike
+        """
+        Compute the strike price of the option.
+
+        :param market: dict - Current market data.
+        :param option_price: float or None - Option price for calculating implied strike.
+        :return: float - Strike price.
         """
         strike = self.strike
         spot_price = market['spot_prices'][self.underlyer]
@@ -89,10 +144,22 @@ class Option(Asset):
         return strike
 
     def time_to_expiry(self, date):
+        """
+        Calculate the time to expiration in years.
+
+        :param date: date object - As-of date.
+        :return: float - Time to expiration in years.
+        """
         date = pd.Timestamp(date)
         return (self.expiration - date) / pd.Timedelta('365 days')
         
     def reprice(self, market):
+        """
+        Calculate the price of the option based on current market data.
+
+        :param market: dict - Current market data.
+        :return: OptionPrice - Price of the option.
+        """
         date = pd.Timestamp(market['date'])
         underlyer = self.underlyer
         spot_price = market['spot_prices'][underlyer]
@@ -105,20 +172,61 @@ class Option(Asset):
         return OptionPrice(name=self.name, date=date, **data)
         
     def __eq__(self, other):
+        """
+        Compare two options for equality.
+
+        :param other: Option - The other option to compare.
+        :return: bool - True if the options are equal, False otherwise.
+        """
         attributes = ['name', 'underlyer', 'option_type', 'expiration', 'strike']
         return all([getattr(self, key) == getattr(other, key) for key in attributes])
 
     def to_string(self, indent=0):
+        """
+        Return a string representation of the option.
+
+        :param indent: int - Indentation level.
+        :return: str - String representation of the option.
+        """
         return f'{self.underlyer}_{self.expiration:%Y%m%d}_{self.strike:.2f}_{self.option_type}'
         
 
 class OptionPrice(AssetPrice):
+    """
+    The OptionPrice class represents the price of an option at a specific date.
+
+    Attributes:
+        delta (float): Option delta.
+        gamma (float): Option gamma.
+        vega (float): Option vega.
+        theta (float): Option theta.
+        rho (float): Option rho.
+        und_price (float): Underlying asset price.
+
+    Methods:
+        __init__(name, date, **kwargs): Initialize the OptionPrice object.
+        to_string(delim): Return a string representation of the option price.
+    """
+
     def __init__(self, name, date, **kwargs):
+        """
+        Initialize the OptionPrice object.
+
+        :param name: str - Name of the option price.
+        :param date: date object - Date of the option price.
+        :param kwargs: dict - Keyword arguments for additional attributes (price, delta, gamma, vega, theta, rho, und_price).
+        """
         super().__init__(name, date, **kwargs)
         for key in ['delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']:
             setattr(self, key, kwargs[key])
         
     def to_string(self, delim=', '):
+        """
+        Return a string representation of the option price.
+
+        :param delim: str - Delimiter between attribute-value pairs.
+        :return: str - String representation of the option price.
+        """
         core_string = f'{self.name}: '
         date_string = f'date: {self.date:%Y-%m-%d}, '
         val_strings = [f'{key}: {getattr(self, key):.2f}'

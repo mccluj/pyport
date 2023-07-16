@@ -1,6 +1,7 @@
 """Portfolio unittests"""
 import unittest
 import pytest
+import textwrap
 import pandas as pd
 from pyport import Portfolio, Stock
 
@@ -49,3 +50,13 @@ class TestPortfolio(unittest.TestCase):
         portfolio.mark_positions(prices)
         aum_1 = portfolio.aum
         assert aum_1 - aum_0 == portfolio.positions['SPY'] * price_change
+
+    def test_to_string(self):
+        expected = textwrap.dedent("""
+        Portfolio(cash=3500.0, aum=10000.0):
+        positions:
+             position  price
+        SPY        10    400
+        AGG        50     50
+        """).strip()
+        assert expected == self.rebalanced_portfolio.to_string()
