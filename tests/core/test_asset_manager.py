@@ -23,10 +23,15 @@ class TestAssets(unittest.TestCase):
             'option': Option('option', 'stock', 'call', '1/1/2024', 105),
             'basket': Basket('basket', pd.Series({'stock': 1, 'option': -1}))
         }
+        self.basket_only_assets = {
+            'basket': Basket('basket', pd.Series({'stock': 1, 'option': -1}))
+        }
         self.all_asset_manager = AssetManager()
         _ = [self.all_asset_manager.add_asset(asset) for asset in self.all_assets.values()]
         self.missing_asset_manager = AssetManager()
         _ = [self.missing_asset_manager.add_asset(asset) for asset in self.missing_assets.values()]
+        self.basket_only_manager = AssetManager()
+        _ = [self.basket_only_manager.add_asset(asset) for asset in self.basket_only_assets.values()]
 
     def test_add_asset(self):
         self.all_asset_manager.assets == list(self.all_assets.values())
@@ -54,10 +59,3 @@ class TestAssets(unittest.TestCase):
         with pytest.raises(RuntimeError) as excinfo:
             prices_data = manager.reprice_assets(self.market)
         assert str(excinfo.value) == 'generator raised StopIteration'
-
-    def test_add_missing_stock_prices(self):
-        manager = self.missing_asset_manager
-        manager.set_asset_price('stock', 100)
-        manager.reprice_assets(self.market)
-        prices = manager.get_asset_prices()
-        assert prices['basket'] == prices['stock'] - prices['option']
