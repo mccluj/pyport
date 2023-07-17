@@ -8,7 +8,12 @@ from pyport import Stock, Option, Basket, AssetManager
 
 class TestAssets(unittest.TestCase):
     def setUp(self):
-        self.market = {'date': '1/1/2023', 'prices': {'SPY': 100}}
+        self.market = {'date': '1/1/2023',
+                       'prices': {'SPY': 100},
+                       'volatilities': {'SPY': 0.2},
+                       'div_rates': {'SPY': 0.02},
+                       'discount_rates': 0.05}
+
         self.assets = {
             'stock': Stock('stock'),
             'option': Option('option', 'stock', 'call', '1/1/2023', 105),
@@ -19,7 +24,12 @@ class TestAssets(unittest.TestCase):
     def test_add_asset(self):
         assert self.manager.assets == list(self.assets.values())
 
-    def test_lazy_price(self):
+    def test_simple_calculate_asset_price(self):
+        """Let asset price be the number of its dependencies."""
+        def simple_calculate_asset_price(asset, market):
+            return len(asset.dependencies) * 10
+
         manager = self.manager
-        manager.lazy_price(None)
-        print(manager.prices)
+        manager.calculate_asset_price = simple_calculate_asset_price
+        prices = manager.reprice_assets(None)
+        assert prices == {'stock': 0, 'option': 10, 'basket': 20}

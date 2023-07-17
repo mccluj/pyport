@@ -44,8 +44,11 @@ class AssetManager:
             yield asset.name, self.prices[asset.name]
 
     def reprice_assets(self, market):
-        for asset_name, asset_price in self.lazy_price(market):
-            print(f"{asset_name}: {asset_price}")
+        """Update and return asset prices.
+        :return: pd.Series
+        """
+        _ = list(self.lazy_price(market))
+        return self.prices
 
 
 if __name__ == '__main__':
@@ -61,5 +64,5 @@ if __name__ == '__main__':
     manager.add_asset(Asset("Asset 1", []))
     manager.add_asset(Asset("Asset 2", ["Asset 1"]))
 
-    manager.reprice_assets(None)
-    print(manager.prices)
+    prices = manager.reprice_assets(None)
+    print(prices)
