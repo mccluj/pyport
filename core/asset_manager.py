@@ -60,12 +60,13 @@ class AssetManager:
         market = deepcopy(market)
         _ = list(self.lazy_price(market))
 
-    def set_asset_prices(self, prices):
-        """Setting prices from external sources, bypass the need to calculate
-        them here.
-        :param prices: pd.Series
+    def set_asset_price(self, name, price):
+        """Setting asset price from external sources, bypass the need to calculate
+        it here.
+        :param name: str -- asset name
+        :param price: float
         """
-        self.prices = {**self.prices, **prices.to_dict()}
+        self.prices[name] = price
         
     def get_asset_prices(self):
         """Return asset prices

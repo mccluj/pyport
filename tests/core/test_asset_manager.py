@@ -19,39 +19,44 @@ class TestAssets(unittest.TestCase):
             'option': Option('option', 'stock', 'call', '1/1/2024', 105),
             'basket': Basket('basket', pd.Series({'stock': 1, 'option': -1}))
         }
-        self.assets_missing_stock = {
+        self.missing_assets = {
             'option': Option('option', 'stock', 'call', '1/1/2024', 105),
             'basket': Basket('basket', pd.Series({'stock': 1, 'option': -1}))
         }
-        self.manager = AssetManager()
+        self.all_asset_manager = AssetManager()
+        _ = [self.all_asset_manager.add_asset(asset) for asset in self.all_assets.values()]
+        self.missing_asset_manager = AssetManager()
+        _ = [self.missing_asset_manager.add_asset(asset) for asset in self.missing_assets.values()]
 
     def test_add_asset(self):
-        _ = [self.manager.add_asset(asset) for asset in self.all_assets.values()]
-        assert self.manager.assets == list(self.all_assets.values())
+        self.all_asset_manager.assets == list(self.all_assets.values())
 
     def test_simple_calculate_asset_price(self):
         """Let asset price be the number of its dependencies."""
         def simple_calculate_asset_price(asset, market):
             return len(asset.dependencies) * 10
 
-        manager = self.manager
-        _ = [manager.add_asset(asset) for asset in self.all_assets.values()]
+        manager = self.all_asset_manager
         manager.calculate_asset_price = simple_calculate_asset_price
         manager.reprice_assets(None)
         assert manager.prices == {'stock': 0, 'option': 10, 'basket': 20}
 
     def test_market_calculate_asset_price(self):
         """Use pyport reprice calculations for assets."""
-        manager = self.manager
-        _ = [manager.add_asset(asset) for asset in self.all_assets.values()]
+        manager = self.all_asset_manager
         manager.reprice_assets(self.market)
         prices = manager.get_asset_prices()
         assert prices['basket'] == prices['stock'] - prices['option']
 
     def test_missing_stock_asset(self):
         """Drop stock asset from manager assets, and look for exception."""
-        manager = self.manager
-        _ = [manager.add_asset(asset) for asset in self.assets_missing_stock.values()]
+        manager = self.missing_asset_manager
         with pytest.raises(RuntimeError) as excinfo:
             prices_data = manager.reprice_assets(self.market)
         assert str(excinfo.value) == 'generator raised StopIteration'
+
+    def test_add_missing_stock_prices(self):
+        manager = self.missing_asset_manager
+        manager.set_asset_price('stock', 100)
+        manager.reprice_assets(self.market)
+        print(manager.get_asset_prices())
