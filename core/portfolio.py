@@ -135,3 +135,38 @@ class Portfolio:
         :return: float - Total AUM of the portfolio.
         """
         return self.cash + self.positions @ self.prices
+
+
+def usage_example():
+    # Initial portfolio
+
+    portfolio = Portfolio(cash=10000)
+    print(portfolio.to_string())
+
+    # Add a target
+    
+    market = {
+        'date': '1/1/2023',
+        'prices': pd.Series({'stock': 100, 'option': 5, 'basket': 95}),
+    }
+    target = pd.Series(dict(stock=50, option=-25, basket=10))
+    portfolio.rebalance(market, target)
+    print(portfolio.to_string())
+
+    # Remark positions
+    
+    market = {
+        'date': '2/1/2023',
+        'prices': pd.Series({'stock': 110, 'option': 7, 'basket': 90}),
+    }
+    portfolio.mark_positions(market['prices'])
+    print(portfolio.to_string())
+    
+    # add dividend payments
+
+    portfolio.add_dividends_to_cash(pd.Series({'stock': 3}))
+    print(portfolio.to_string())
+
+    
+if __name__ == '__main__':
+    usage_example()
