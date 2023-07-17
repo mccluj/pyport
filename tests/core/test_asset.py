@@ -7,6 +7,8 @@ from pyport.core.asset import Asset, AssetPrice
 class TestAsset(unittest.TestCase):
     def setUp(self):
         class Dummy(Asset):
+            def __init__(self, name):
+                super().__init__(name, [])
             def reprice(self, *_args, **_kwargs):
                 return AssetPrice(self.name, price=100, date='1/1/2023')
         self.asset = Dummy('dummy')

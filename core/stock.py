@@ -7,8 +7,7 @@ from pyport.core.asset import Asset, AssetPrice
 
 class Stock(Asset):
     def __init__(self, name):
-        super().__init__(name)
-        self.price = None
+        super().__init__(name, [])
 
     def reprice(self, market):
         date = market['date']

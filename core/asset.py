@@ -5,9 +5,14 @@ import pandas as pd
 
 class Asset(ABC):
     """Asset base class."""
-    def __init__(self, name):
-        """Core initialization"""
+    def __init__(self, name, dependencies):
+        """For Asset, store asset name and dependencies on other assets. These
+        dependencies are used by AssetManager for lazy evaluation of asset prices.
+        :param name: str
+        :param dependencies: list(str)
+        """
         self.name = name
+        self.dependencies = dependencies
 
     def instantiate(self, market, **_kwargs):
         """Instantiate any market-dependent attributes.

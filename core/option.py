@@ -58,7 +58,7 @@ class Option(Asset):
         :param expiration: date
         :param strike: float
         """
-        super().__init__(name)
+        super().__init__(name, [underlyer])
         self.underlyer = underlyer
         self.option_type = option_type
         self.strike = strike
@@ -75,7 +75,7 @@ class Option(Asset):
         :param name: str - New name for the option.
         :return: None
         """
-        super().__init__(name)
+        super().__init__(name, [self.underlyer])
 
     @classmethod
     def instantiate_from_market(cls, market, name, **kwargs):
