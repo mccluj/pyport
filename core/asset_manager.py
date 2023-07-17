@@ -2,6 +2,7 @@
 Assets are registered with AssetManager using the asset name as the key.
 Pricing is lazy evaluation relying on asset dependencies.
 """
+from copy import deepcopy
 
 
 class AssetManager:
@@ -30,11 +31,12 @@ class AssetManager:
 
         asset_price = self.calculate_asset_price(asset, market)
         self.prices[asset.name] = asset_price
-
         return asset_price
 
     def calculate_asset_price(self, asset, market):
-        return 10 * len(asset.dependencies)
+        price_data = asset.reprice(market)
+        market['prices'][asset.name] = price_data.price
+        return price_data
 
     def lazy_price(self, market):
         for asset in self.assets:
@@ -47,22 +49,6 @@ class AssetManager:
         """Update and return asset prices.
         :return: pd.Series
         """
+        market = deepcopy(market)
         _ = list(self.lazy_price(market))
         return self.prices
-
-
-if __name__ == '__main__':
-    class Asset:
-        def __init__(self, name, dependencies):
-            self.name = name
-            self.dependencies = dependencies
-
-
-    manager = AssetManager()
-
-    manager.add_asset(Asset("Asset 3", ["Asset 1", "Asset 2"]))
-    manager.add_asset(Asset("Asset 1", []))
-    manager.add_asset(Asset("Asset 2", ["Asset 1"]))
-
-    prices = manager.reprice_assets(None)
-    print(prices)
