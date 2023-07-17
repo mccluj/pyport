@@ -70,7 +70,8 @@ def usage_example():
                    'prices': pd.Series({'stock': 100}),
                    'volatilities': pd.Series({'stock': 0.2}),
                    'div_rates': pd.Series({'stock': 0.02}),
-                   'discount_rates': 0.05}
+                   'discount_rates': 0.05
+    }
     assets = {
         'stock': Stock('stock'),
         'option': Option('option', 'stock', 'call', '1/1/2024', 105),
