@@ -1,4 +1,4 @@
-from pyport.core.asset_manager import AssetManager
+from pyport.core.asset_price_manager import AssetManager
 from pyport.core.asset import Asset, AssetPrice
 from pyport.core.option import Option
 from pyport.core.stock import Stock
