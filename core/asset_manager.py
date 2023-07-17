@@ -3,6 +3,8 @@ Assets are registered with AssetManager using the asset name as the key.
 Pricing is lazy evaluation relying on asset dependencies.
 """
 from copy import deepcopy
+import pandas as pd
+from pyport.core.asset import AssetPrice
 
 
 class AssetManager:
@@ -35,8 +37,12 @@ class AssetManager:
 
     def calculate_asset_price(self, asset, market):
         price_data = asset.reprice(market)
-        market['prices'][asset.name] = price_data.price
-        return price_data
+        if isinstance(price_data, AssetPrice):
+            price = price_data.price
+        else:
+            price = price_data
+        market['prices'][asset.name] = price  # for asset.reprice(market)
+        return price                          # for asset_manager.prices
 
     def lazy_price(self, market):
         for asset in self.assets:
@@ -46,9 +52,23 @@ class AssetManager:
             yield asset.name, self.prices[asset.name]
 
     def reprice_assets(self, market):
-        """Update and return asset prices.
-        :return: pd.Series
+        """Update asset prices.
+        :return None:
         """
+        # maintain a local copy of the market we can modify by adding
+        # newly computed prices.
         market = deepcopy(market)
         _ = list(self.lazy_price(market))
-        return self.prices
+
+    def set_asset_prices(self, prices):
+        """Setting prices from external sources, bypass the need to calculate
+        them here.
+        :param prices: pd.Series
+        """
+        self.prices = {**self.prices, **prices.to_dict()}
+        
+    def get_asset_prices(self):
+        """Return asset prices
+        :return: pd.Series
+        """
+        return pd.Series(self.prices)
