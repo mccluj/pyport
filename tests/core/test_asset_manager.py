@@ -59,4 +59,5 @@ class TestAssets(unittest.TestCase):
         manager = self.missing_asset_manager
         manager.set_asset_price('stock', 100)
         manager.reprice_assets(self.market)
-        print(manager.get_asset_prices())
+        prices = manager.get_asset_prices()
+        assert prices['basket'] == prices['stock'] - prices['option']
