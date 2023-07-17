@@ -15,7 +15,7 @@ class AssetManager:
     def add_asset(self, asset):
         self.assets.append(asset)
 
-    def calculate_price(self, asset, market):
+    def _calculate_price(self, asset, market):
         if asset.name in self.prices:
             return self.prices[asset.name]
 
@@ -29,7 +29,7 @@ class AssetManager:
                     dependency_asset = next(
                         a for a in self.assets if a.name == dependency
                     )
-                    self.calculate_price(dependency_asset, market)
+                    self._calculate_price(dependency_asset, market)
 
         asset_price = self.calculate_asset_price(asset, market)
         self.prices[asset.name] = asset_price
@@ -47,7 +47,7 @@ class AssetManager:
     def lazy_price(self, market):
         for asset in self.assets:
             if asset.name not in self.prices:
-                self.calculate_price(asset, market)
+                self._calculate_price(asset, market)
         for asset in self.assets:
             yield asset.name, self.prices[asset.name]
 
