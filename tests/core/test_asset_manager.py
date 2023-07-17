@@ -42,7 +42,7 @@ class TestAssets(unittest.TestCase):
             return len(asset.dependencies) * 10
 
         manager = self.all_asset_manager
-        manager.calculate_asset_price = simple_calculate_asset_price
+        manager._calculate_asset_price = simple_calculate_asset_price
         manager.reprice_assets(None)
         assert manager.prices == {'stock': 0, 'option': 10, 'basket': 20}
 

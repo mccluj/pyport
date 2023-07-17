@@ -31,11 +31,11 @@ class AssetManager:
                     )
                     self._calculate_price(dependency_asset, market)
 
-        asset_price = self.calculate_asset_price(asset, market)
+        asset_price = self._calculate_asset_price(asset, market)
         self.prices[asset.name] = asset_price
         return asset_price
 
-    def calculate_asset_price(self, asset, market):
+    def _calculate_asset_price(self, asset, market):
         price_data = asset.reprice(market)
         if isinstance(price_data, AssetPrice):
             price = price_data.price
