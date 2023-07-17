@@ -5,6 +5,9 @@ Pricing is lazy evaluation relying on asset dependencies.
 from copy import deepcopy
 import pandas as pd
 from pyport.core.asset import AssetPrice
+from pyport.core.stock import Stock
+from pyport.core.option import Option
+from pyport.core.basket import Basket
 
 
 class AssetManager:
@@ -37,10 +40,7 @@ class AssetManager:
 
     def _calculate_asset_price(self, asset, market):
         price_data = asset.reprice(market)
-        if isinstance(price_data, AssetPrice):
-            price = price_data.price
-        else:
-            price = price_data
+        price = price_data.price
         market['prices'][asset.name] = price  # for asset.reprice(market)
         return price                          # for asset_manager.prices
 
@@ -55,8 +55,6 @@ class AssetManager:
         """Update asset prices.
         :return None:
         """
-        # maintain a local copy of the market we can modify by adding
-        # newly computed prices.
         market = deepcopy(market)
         _ = list(self.lazy_price(market))
 
@@ -65,3 +63,24 @@ class AssetManager:
         :return: pd.Series
         """
         return pd.Series(self.prices)
+
+
+def usage_example():
+    market = {'date': '1/1/2023',
+                   'prices': pd.Series({'stock': 100}),
+                   'volatilities': pd.Series({'stock': 0.2}),
+                   'div_rates': pd.Series({'stock': 0.02}),
+                   'discount_rates': 0.05}
+    assets = {
+        'stock': Stock('stock'),
+        'option': Option('option', 'stock', 'call', '1/1/2024', 105),
+        'basket': Basket('basket', pd.Series({'stock': 1, 'option': -1}))
+    }
+    manager = AssetManager()
+    _ = [manager.add_asset(asset) for asset in assets.values()]
+    manager.reprice_assets(market)
+    return manager.get_asset_prices()
+
+    
+if __name__ == '__main__':
+    print(usage_example())
