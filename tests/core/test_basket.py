@@ -45,5 +45,3 @@ class TestBasket(unittest.TestCase):
         expected_frame = pd.DataFrame([[10, 100], [20, 40]], index=['SPY', 'XYZ'], columns=['shares', 'price'])
         self.assertAlmostEqual(data.price, expected_price)
         assert_frame_equal(data.asset_data, expected_frame)
-
-        
