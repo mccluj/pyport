@@ -58,4 +58,4 @@ class TestAssets(unittest.TestCase):
         manager = self.missing_asset_manager
         with pytest.raises(RuntimeError) as excinfo:
             prices_data = manager.reprice_assets(self.market)
-        assert str(excinfo.value) == 'generator raised StopIteration'
+        assert str(excinfo.value) == "Cannot find asset 'stock'"

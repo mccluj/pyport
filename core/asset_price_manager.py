@@ -46,7 +46,7 @@ from pyport.core.basket import Basket
 class AssetManager:
     def __init__(self):
         """Initialize the AssetManager class."""
-        self.assets = []  # List to store assets
+        self.assets = {}  # Dictionary to store assets
         self.prices = {}  # Dictionary to store asset prices
 
     def add_asset(self, asset):
@@ -56,7 +56,7 @@ class AssetManager:
             asset: An instance of the Asset class.
 
         """
-        self.assets.append(asset)
+        self.assets[asset.name] = asset
 
     def _calculate_recursive_asset_price(self, asset, market):
         """Calculate the price of an asset.
@@ -84,10 +84,11 @@ class AssetManager:
         if not dependencies_satisfied:
             for dependency in asset.dependencies:
                 if dependency not in self.prices:
-                    dependency_asset = next(
-                        a for a in self.assets if a.name == dependency
-                    )
-                    self._calculate_recursive_asset_price(dependency_asset, market)
+                    dependency_asset = self.assets.get(dependency)
+                    if dependency_asset is not None:
+                        self._calculate_recursive_asset_price(dependency_asset, market)
+                    else:
+                        raise RuntimeError(f"Cannot find asset '{dependency}'")
 
         asset_price = self._calculate_leaf_node_asset_price(asset, market)
         self.prices[asset.name] = asset_price
@@ -122,11 +123,11 @@ class AssetManager:
             A tuple containing the asset name and its price.
 
         """
-        for asset in self.assets:
-            if asset.name not in self.prices:
+        for name, asset in self.assets.items():
+            if name not in self.prices:
                 self._calculate_recursive_asset_price(asset, market)
         for asset in self.assets:
-            yield asset.name, self.prices[asset.name]
+            yield name, self.prices[name]
 
     def reprice_assets(self, market):
         """Update asset prices.
