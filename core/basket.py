@@ -22,7 +22,7 @@ class Basket(Asset):
         :param shares: pd.Series (Optional)
         :param weights: pd.Series (Optional)
         :param target_value: float (Optional)
-        :return: Option instance
+        :return: Basket instance
         """
         if kwargs.get('shares') is not None:
             shares = kwargs['shares']
