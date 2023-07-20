@@ -9,7 +9,7 @@ class Basket(Asset):
         :param name: str
         :param shares: pd.Series
         """
-        super().__init__(name, shares.index.to_list())
+        super().__init__(name, dependencies=shares.index.to_list())
         self.shares = shares
 
     @classmethod
