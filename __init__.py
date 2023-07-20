@@ -1,5 +1,6 @@
 from pyport.core.asset_manager import AssetManager
 from pyport.core.asset import Asset, AssetPrice
+from pyport.core.bond import Bond
 from pyport.core.option import Option
 from pyport.core.stock import Stock
 from pyport.core.portfolio import Portfolio

@@ -47,7 +47,7 @@ class Option(Asset):
         :param expiration: date
         :param strike: float
         """
-        super().__init__(name, [underlyer])
+        super().__init__(name, dependencies=[underlyer])
         self.underlyer = underlyer
         self.option_type = option_type
         self.strike = strike
