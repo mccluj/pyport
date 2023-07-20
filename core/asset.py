@@ -14,10 +14,6 @@ class Asset(ABC):
         self.name = name
         self.dependencies = dependencies
 
-    def instantiate(self, market, **_kwargs):
-        """Instantiate any market-dependent attributes.
-        """
-
     @abstractmethod
     def reprice(self, market) -> None:
         """Reprice class using data found in market object

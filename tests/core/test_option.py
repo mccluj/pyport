@@ -96,7 +96,7 @@ class TestOption(unittest.TestCase):
     def test_instantiate_with_implied_and_tenor(self):
         market = self.market
         target = Option('test', 'SPY', 'call', '12/31/2023', strike=408).reprice(market)
-        option = Option.instantiate_from_market(market, 'test', underlyer='SPY', option_type='call',
-                                                tenor='A', strike='implied', target_price=target.price)
+        option = Option.from_market(market, 'test', underlyer='SPY', option_type='call',
+                                    tenor='A', strike='implied', target_price=target.price)
         assert option.expiration == pd.Timestamp('12/31/2023')
         self.assertAlmostEqual(option.strike, 408)

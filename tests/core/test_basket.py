@@ -21,20 +21,20 @@ class TestBasket(unittest.TestCase):
         assert_series_equal(basket.shares, self.shares)
 
     def test_instantiate_from_weights(self):
-        basket = Basket.instantiate_from_market(self.market, 'basket',
-                                                weights=self.weights, target_value=self.target_value)
+        basket = Basket.from_market(self.market, 'basket',
+                                    weights=self.weights, target_value=self.target_value)
         expected_shares = self.weights * self.target_value / pd.Series(self.market['prices'])
         assert_series_equal(basket.shares, expected_shares)
 
     def test_instantiate_from_shares(self):
-        basket = Basket.instantiate_from_market(self.market, 'basket', shares=self.shares)
+        basket = Basket.from_market(self.market, 'basket', shares=self.shares)
         expected_shares = self.shares
         assert_series_equal(basket.shares, expected_shares)
 
     def test_instantiate_from_shares_and_weights(self):
         """Verify shares take precendence"""
-        basket = Basket.instantiate_from_market(self.market, 'basket', shares=self.shares,
-                                                weights=self.weights, target_value=self.target_value)
+        basket = Basket.from_market(self.market, 'basket', shares=self.shares,
+                                    weights=self.weights, target_value=self.target_value)
         expected_shares = self.shares
         assert_series_equal(basket.shares, expected_shares)
 

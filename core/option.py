@@ -35,17 +35,6 @@ class Option(Asset):
         expiration (pd.Timestamp or None): Expiration date of the option.
         strike (float or "implied"): Strike price of the option.
         identifier: string representation of the option. 
-
-    Methods:
-        __init__(name, underlyer, option_type, expiration, strike, moneyness, tenor): Initialize the Option object.
-        rename(name): Rename the Option object.
-        instantiate(market, option_price): Define option attributes based on current market levels.
-        _calculate_expiration(market): Compute the expiration date of the option.
-        _calculate_strike(market, option_price): Compute the strike price of the option.
-        time_to_expiry(date): Calculate the time to expiration in years.
-        reprice(market): Calculate the price of the option based on current market data.
-        __eq__(other): Compare two options for equality.
-        to_string(indent): Return a string representation of the option.
     """
 
     def __init__(self, name, underlyer, option_type, expiration, strike):
@@ -78,7 +67,7 @@ class Option(Asset):
         super().__init__(name, [self.underlyer])
 
     @classmethod
-    def instantiate_from_market(cls, market, name, **kwargs):
+    def from_market(cls, market, name, **kwargs):
         underlyer = kwargs['underlyer']
         option_type = kwargs['option_type']
         expiration = Option._calculate_expiration(market, **kwargs)

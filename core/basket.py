@@ -13,7 +13,7 @@ class Basket(Asset):
         self.shares = shares
 
     @classmethod
-    def instantiate_from_market(cls, market, name, **kwargs):
+    def from_market(cls, market, name, **kwargs):
         """Instantiate a basket from either weights or shares using market data.
         If weights are used, a basket target value must be provided. Note if both
         weights and shares are provided, shares takes precedence.
