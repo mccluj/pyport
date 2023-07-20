@@ -44,19 +44,31 @@ from pyport.core.basket import Basket
 
 
 class AssetManager:
-    def __init__(self):
-        """Initialize the AssetManager class."""
-        self.assets = {}  # Dictionary to store assets
-        self.prices = {}  # Dictionary to store asset prices
+    _instance = None
 
-    def add_asset(self, asset):
-        """Add an asset to the AssetManager.
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls, *args, **kwargs)
+            # Initialize any necessary attributes for the asset manager
+            cls._instance.reset()
+        return cls._instance
 
-        Args:
-            asset: An instance of the Asset class.
+    def reset(self):
+        self.assets = {}
+        self.prices = {}
 
-        """
-        self.assets[asset.name] = asset
+    def add_asset(self, asset_name, asset_instance):
+        # Add a new asset to the asset manager
+        self.assets[asset_name] = asset_instance
+
+    def remove_asset(self, asset_name):
+        # Remove an asset from the asset manager
+        if asset_name in self.assets:
+            del self.assets[asset_name]
+
+    def get_asset(self, asset_name):
+        # Retrieve an asset from the asset manager
+        return self.assets.get(asset_name, None)
 
     def _calculate_recursive_asset_price(self, asset, market):
         """Calculate the price of an asset.
