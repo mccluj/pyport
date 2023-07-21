@@ -40,12 +40,6 @@ class TestOption(unittest.TestCase):
         pricing_info = self.call_option.reprice(self.market)
         assert pricing_info.to_string() == 'call: date: 2023-01-01, price: 37.85, delta: 0.60, gamma: 0.00, vega: 151.42, theta: -21.37, rho: 200.86, und_price: 400.00'
 
-    def test_rename(self):
-        option = self.call_option
-        assert option.name == 'call'
-        option.rename('dummy')
-        assert option.name == 'dummy'
-
     def test_identifier(self):
         assert self.call_option.to_string() == 'SPY_20240101_400.00_call'
         incomplete = Option('incomplete', None, None, None, None)

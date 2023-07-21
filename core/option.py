@@ -57,15 +57,6 @@ class Option(Asset):
         except:
             self.identifier = None
             
-    def rename(self, name):
-        """
-        Rename the Option object.
-
-        :param name: str - New name for the option.
-        :return: None
-        """
-        super().__init__(name, [self.underlyer])
-
     @classmethod
     def from_market(cls, market, name, **kwargs):
         underlyer = kwargs['underlyer']
