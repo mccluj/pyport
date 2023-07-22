@@ -48,4 +48,4 @@ class Bundle(Asset):
             assets[key] = asset_class.from_config(asset_config, asset_configs, market)
         
         prices = assets.apply(lambda asset: asset.price)
-        return cls.from_weights(
+        return cls.from_weights() # Fix this. not sure what's going on here.
