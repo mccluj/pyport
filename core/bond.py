@@ -9,7 +9,7 @@ from pyport.core.asset_manager import AssetManager
 class Bond(Asset):
     def __init__(self, name, notional, maturity):
         super().__init__(name, dependencies=[])
-        self.maturity = maturity
+        self.maturity = pd.Timestamp(maturity)
         self.notional = notional
 
     @classmethod
@@ -35,7 +35,7 @@ class Bond(Asset):
 
     def reprice(self, market):
         rate = market['discount_rates']
-        date = market['date']
+        date = pd.Timestamp(market['date'])
         tenor = (self.maturity - date) / pd.Timedelta('365 Days')
         price = self.notional * np.exp(-rate * tenor)
         return AssetPrice(self.name, date, price)

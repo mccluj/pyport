@@ -15,6 +15,11 @@ class TestBond(unittest.TestCase):
                        'volatilities': {'SPY': 0.20},
                        }
 
+    def test_bond___init__(self):
+        date_string = '1/1/2023'
+        bond = Bond('test_bond', 100, date_string)
+        assert bond.maturity == pd.Timestamp(date_string)
+
     def test_bond_from_notional_and_tenor_years(self):
         bond = Bond.from_market(self.market, 'test_bond', notional=100, tenor=1.0)
         assert bond.notional == 100
@@ -34,3 +39,7 @@ class TestBond(unittest.TestCase):
         bond = Bond.from_market(self.market, 'test_bond', notional=100, tenor=1.0)
         assert bond.to_string() == 'test_bond 20240101 100.0000'
         
+    def test_reprice(self):
+        bond = Bond('test_bond', 100, '1/1/2023')
+        price_data = bond.reprice(self.market)
+        print(price_data.price)
