@@ -44,7 +44,7 @@ def main():
     option = Option(*config['options'][0])
     price_data = option.reprice(market)
     market['prices']['SPY_put'] = price_data.price
-    portfolio.mark_positions(market['prices'])
+    portfolio.update_mark_prices(market['prices'])
     print(portfolio.to_string())
     
 main()

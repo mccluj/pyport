@@ -43,7 +43,7 @@ class Portfolio:
     Methods:
         rebalance(market, target): Rebalance the portfolio positions and cash balance from the target shares.
         add_dividends_to_cash(dividends): Update the internal cash balance with dividends paid on asset positions.
-        mark_positions(prices): Update the prices used to evaluate positions.
+        update_mark_prices(prices): Update the prices used to evaluate positions.
         to_string(): Convert the Portfolio object to a string representation.
         check_for_missing_prices(series, prices): Check for missing prices in the given series and prices.
         aum(): Calculate the total assets under management (AUM) of the portfolio.
@@ -74,7 +74,7 @@ class Portfolio:
         self.trades = pd.DataFrame({'shares': trade_shares, 'prices': trade_prices})
         self.positions = target_shares.copy()
         self.cash -= self.trades.shares @ self.trades.prices
-        self.mark_positions(market_prices)
+        self.update_mark_prices(market_prices)
 
     def add_dividends_to_cash(self, dividends):
         """
@@ -86,7 +86,7 @@ class Portfolio:
         dividend_value = dividends.mul(self.positions, fill_value=0).sum()
         self.cash += dividend_value
 
-    def mark_positions(self, prices):
+    def update_mark_prices(self, prices):
         """
         Update the prices used to evaluate positions.
 
@@ -159,7 +159,7 @@ def usage_example():
         'date': '2/1/2023',
         'prices': pd.Series({'stock': 110, 'option': 7, 'basket': 90}),
     }
-    portfolio.mark_positions(market['prices'])
+    portfolio.update_mark_prices(market['prices'])
     print(portfolio.to_string())
     
     # add dividend payments

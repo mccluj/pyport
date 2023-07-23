@@ -139,7 +139,7 @@ class Backtest:
         for date in self.dates:
             market = self.market.current(date)
             self.assets.reprice(market)
-            portfolio.mark_positions(self.assets.prices())
+            portfolio.update_mark_prices(self.assets.prices())
             if strategy.check_for_rebalance(context):
                 target = strategy.compute_target(context)
                 portfolio.rebalance(market, target)

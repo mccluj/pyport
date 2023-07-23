@@ -28,11 +28,11 @@ class Basket(Asset):
         if kwargs.get('shares') is not None:
             shares = kwargs['shares']
         elif kwargs.get('weights') is not None:
-            weights = kwargs['weights']
+            weights = pd.Series(kwargs['weights'])
             if 'target_value' not in kwargs:
-                raise ValueError("If 'weights' is specified, a 'target_value' is required")
+                raise ValueError("If 'weights' are specified, a 'target_value' is required")
             target_value = kwargs['target_value']
-            prices = market['prices']
+            prices = pd.Series(market['prices'])
             shares = target_value * weights / prices
         else:
             raise ValueError("Either 'shares' or 'weights' must be provided")

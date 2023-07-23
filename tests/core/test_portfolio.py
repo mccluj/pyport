@@ -44,10 +44,10 @@ class TestPortfolio(unittest.TestCase):
         portfolio = self.rebalanced_portfolio
         prices = self.prices
         price_change = 100
-        portfolio.mark_positions(prices)
+        portfolio.update_mark_prices(prices)
         aum_0 = portfolio.aum
         prices['SPY'] += price_change
-        portfolio.mark_positions(prices)
+        portfolio.update_mark_prices(prices)
         aum_1 = portfolio.aum
         assert aum_1 - aum_0 == portfolio.positions['SPY'] * price_change
 
