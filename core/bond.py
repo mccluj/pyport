@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
 from pyport.core.asset import Asset, AssetPrice
+from pyport.core.asset_manager import AssetManager
 
 
 class Bond(Asset):
@@ -30,7 +31,6 @@ class Bond(Asset):
             rate = market['discount_rates']
             tenor = (maturity - date) / pd.Timedelta('365 Days')
             notional = price * np.exp(rate * tenor)
-            
         return Bond(name, notional, maturity)
 
     def reprice(self, market):

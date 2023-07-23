@@ -1,6 +1,7 @@
 """Base class for assets"""
 from abc import ABC, abstractmethod
 import pandas as pd
+from pyport.core.asset_manager import AssetManager
 
 
 class Asset(ABC):
@@ -13,6 +14,11 @@ class Asset(ABC):
         """
         self.name = name
         self.dependencies = dependencies
+        AssetManager().add_asset(name, self)
+
+    @classmethod
+    def from_market(cls, market, name, **kwargs):
+        cls(name)
 
     @abstractmethod
     def reprice(self, market) -> None:

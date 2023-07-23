@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 import pandas as pd
 from pyport import Option
+from pyport import AssetManager
 
 
 class TestOption(unittest.TestCase):
@@ -16,6 +17,10 @@ class TestOption(unittest.TestCase):
                        }
         self.put_option = Option('put', 'SPY', 'put', '1/1/2024', 400)
         self.call_option = Option('call', 'SPY', 'call', '1/1/2024', 400)
+        self.manager = AssetManager()
+
+    def tearDown(self):
+        self.manager.reset()
 
     def test_put_call_parity(self):
         strike = 400

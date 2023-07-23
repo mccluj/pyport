@@ -6,7 +6,7 @@ import pandas as pd
 from pyport import Bond
 
 
-class TestOption(unittest.TestCase):
+class TestBond(unittest.TestCase):
     def setUp(self):
         self.market = {'date': '1/1/2023',
                        'prices': {'SPY': 400},

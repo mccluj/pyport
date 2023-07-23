@@ -1,6 +1,7 @@
 """Basket of assets (possibly nested)"""
 import pandas as pd
 from pyport.core.asset import Asset, AssetPrice
+from pyport.core.asset_manager import AssetManager
 
 
 class Basket(Asset):

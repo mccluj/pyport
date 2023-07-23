@@ -29,18 +29,6 @@ asset_prices = manager.get_asset_prices()
 
 from copy import deepcopy
 import pandas as pd
-from pyport.core.asset import AssetPrice
-from pyport.core.stock import Stock
-from pyport.core.option import Option
-from pyport.core.basket import Basket
-
-
-from copy import deepcopy
-import pandas as pd
-from pyport.core.asset import AssetPrice
-from pyport.core.stock import Stock
-from pyport.core.option import Option
-from pyport.core.basket import Basket
 
 
 class AssetManager:

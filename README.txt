@@ -5,9 +5,9 @@ Asset - Stock, Option, Bond, Basket
       - purpose: encapsulate all asset specific tasks
 
 AssetManager - maintains dictionary of assets indexed by symbol
-       - handle register/deregister asset requests from portfolio system
+       - handle add_to_asset_manager/deregister asset requests from portfolio system
        - handles repricing assets
-       - register asset prices with Market. (Typically done every period in backtest)
+       - add_to_asset_manager asset prices with Market. (Typically done every period in backtest)
        - purpose: Isolate rest of portfolio system from asset details/repricing.
 
 Market - maintain historical and snapshot ("current") data
@@ -29,7 +29,7 @@ Market - maintain historical and snapshot ("current") data
 	 - rates specified by term
        
        - calculate value-added items like volatility or projected dividend rates
-       - handle register requests for custom assets
+       - handle add_to_asset_manager requests for custom assets
        - purpose: repository of market data for all asset repricing
 
 Strategy - generate portfolio target positions
