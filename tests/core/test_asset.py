@@ -30,6 +30,10 @@ class TestAsset(unittest.TestCase):
         price_info = self.asset.reprice()
         assert price_info.to_string() == 'Asset(dummy, 2023-01-01, 100)'
 
+    def test_asset_from_market(self):
+        asset = Dummy.from_market(market=None, name='test')
+        assert isinstance(asset, Dummy)
+
     def test_from_market_registers_asset(self):
         _ = Dummy.from_market(None, 'test')
         assert 'test' in self.manager.assets

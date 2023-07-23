@@ -18,7 +18,7 @@ class Asset(ABC):
 
     @classmethod
     def from_market(cls, market, name, **kwargs):
-        cls(name)
+        return cls(name)
 
     @abstractmethod
     def reprice(self, market) -> None:
