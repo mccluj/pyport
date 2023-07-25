@@ -75,7 +75,7 @@ class Option(Asset):
         :return: pd.Timestamp
         """
         if 'expiration' in kwargs:
-            expiration = kwargs['expiration']
+            expiration = pd.Timestamp(kwargs['expiration'])
         elif 'tenor' in kwargs:
             tenor = kwargs['tenor']
             date = pd.Timestamp(market['date'])
@@ -216,7 +216,11 @@ class OptionPrice(AssetPrice):
                        for key in ['price', 'delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']]
         return core_string + date_string + delim.join(val_strings)
 
-
+    def to_dict(self):
+        return {key: getattr(self, key) 
+                for key in ['date', 'price', 'delta', 'gamma', 'vega', 'theta', 'rho', 'und_price']}
+        
+        
 def implied_strike(price, S, r, T, sigma, q, option_type):
     """
     Computes an option's implied strike given its option price using the Black-Scholes formula.
