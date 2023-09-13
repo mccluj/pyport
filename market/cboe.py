@@ -19,7 +19,6 @@ class CBOEMarket:
                     mask &= self._data['option_type'] == 'C'
             else:
                 mask &= getattr(self._data, attribute) == getattr(cboe_option, attribute)
-            print(self._data.loc[mask].shape, attribute)
         return self._data.loc[mask]
         
     def find_option(self, date, underlying_symbol, root, option_type, tenor_days, strike):
@@ -88,17 +87,19 @@ market = CBOEMarket(option_data)
 option = market.find_option('8/1/2022', underlying_symbol, root, option_type, tenor_days, 4250.0)
 prices = market.find_data(option).set_index('quote_date')
 print(prices[['bid_1545', 'ask_1545']])
-
+contract = None
 options = {}
-for date in market.date_range():
-    spot = spot_prices[date]
-    strike = spot * moneyness
-    contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
-                                  option_type=option_type, tenor_days=7, strike=strike)
-    contract['spot'] = spot
-    options[date] = contract
-columns = ['quote_date', 'root', 'spot', 'expiration', 'strike', 'option_type', 'bid_1545', 'ask_1545', 'delta_1545']
 
-options = pd.DataFrame(options).T
-print(options[columns].to_csv())
-print(options[columns].to_string())
+for date in market.date_range():
+    if contract is not None:
+        if date >= contract.expiration:
+            contract = None
+    if contract is None:
+        spot = spot_prices[date]
+        strike = spot * moneyness
+        contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
+                                      option_type=option_type, tenor_days=7, strike=strike)
+        options[date] = contract
+    prices = market.find_data(contract).set_index('quote_date')
+    print(pd.Timestamp(date).date(), contract.as_tuple())
+    # print(prices)
