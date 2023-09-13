@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 class Asset(ABC):
     """
-    Abstract base class for different types of assets.
+    Abstract base class for different types of core.
     """
 
     def __init__(self, symbol):

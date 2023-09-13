@@ -1,4 +1,4 @@
-from pyport.assets.asset import Asset
+from pyport.core.asset import Asset
 
 
 class Bundle(Asset):
@@ -10,7 +10,7 @@ class Bundle(Asset):
     def from_weights(cls, target_value, weights, assets):
         """Instantiate class from asset weights and target_value.
         :param weights: pd.Series of asset weights in portfoliio
-        :param assets: pd.Series of instantiated assets
+        :param assets: pd.Series of instantiated core
         :param target_value: float
         :return: Bundle
         """
@@ -37,7 +37,7 @@ class Bundle(Asset):
             
         missing_assets = symbols.difference(asset_configs)
         if missing_assets:
-            raise RuntimeError(f'Missing assets: {missing_assets}')
+            raise RuntimeError(f'Missing core: {missing_assets}')
         
         assets = pd.Series()
         for key, asset_config in asset_configs.items():

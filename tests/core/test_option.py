@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime, timedelta
 from pandas import Timestamp
 from pyport.lib.black_scholes import black_scholes
-from pyport.assets.option import Option, OptionPricingResult
+from pyport.core.option import Option, OptionPricingResult
 
 
 class OptionTests(unittest.TestCase):
