@@ -24,8 +24,7 @@ class TestCBOEOption:
         assert option.root == 'SPXW'
         assert option.option_type == OptionType.CALL
         
-
-    def test_base_tubple(self):
+    def test_as_tuple(self):
         expected = ('^SPX', 'SPXW', pd.Timestamp('1/1/2024'), 'C', 100)
         assert self.call_option.as_tuple() == expected
         
