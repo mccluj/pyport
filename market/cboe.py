@@ -83,8 +83,6 @@ def calculate_payoff(option, underlying_price):
 path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.csv'
 option_data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
 path = os.path.join('~/data/yahoo/spx_bars.csv')
-stock_data = pd.read_csv(path, parse_dates=['Date'], index_col=['Date'])
-spot_prices = stock_data['close'].round(2)
 underlying_symbol='^SPX'
 root = 'SPXW'
 moneyness = 1.0
@@ -98,12 +96,12 @@ daily_pnls = pd.Series(0.0, index=market.date_range())
 aums = pd.Series(0.0, index=market.date_range())
 underlying_data = option_data[['quote_date', 'underlying_bid_1545', 'underlying_ask_1545']]
 underlying_prices = underlying_data.groupby('quote_date').first()
-underlying_prices = underlying_prices.mean(axis=1)
+spot_prices = underlying_prices.mean(axis=1)
 daily_pnl = 0                   # only needed until the first contract is created.
 for date in market.date_range():
     if contract is not None:
         if date >= contract.expiration:
-            underlying_price = underlying_prices[date]
+            underlying_price = spot_prices[date]
             contract_payoff = calculate_payoff(contract, underlying_price)
             daily_pnl = n_contracts * (contract_payoff - previous_price)
             contract = None
@@ -125,6 +123,6 @@ for date in market.date_range():
     aum += daily_pnl
     aums[date] = aum
     previous_price = current_price
-results = pd.concat([underlying_prices, daily_pnls, aums], axis=1, keys=['SPX', 'pnl', 'aum'])
+results = pd.concat([spot_prices, daily_pnls, aums], axis=1, keys=['SPX', 'pnl', 'aum'])
 
 print(results)
