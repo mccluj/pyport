@@ -8,7 +8,9 @@ from pyport.core.cboe_option import CBOEOption, OptionType, calculate_payoff
 
 class CBOEMarket:
     def __init__(self, data):
+        index_columns = ['quote_date', 'underlying_symbol', 'root', 'option_type']
         self._data = data
+        self._indexed_data = data.set_index(index_columns).sort_index()
         self._quotes_cache = {}
         self._underlying_quotes_cache = {}
 
@@ -40,30 +42,14 @@ class CBOEMarket:
         :return: CBOEOPtion
         """
         date = pd.Timestamp(date)
-        strike = spot * moneyness
-        frame = self._data
-        # date
-        mask = (frame.quote_date == date)
-        mask &= (frame.underlying_symbol == underlying_symbol)
-        mask &= (frame.root == root)
-        mask &= (frame.option_type == option_type)
-        frame = frame.loc[mask]
+        index = pd.IndexSlice[date, underlying_symbol, root, option_type]
+        frame = self._indexed_data.loc[index].reset_index()
         # expiration date
         expiration = self.find_expiry(frame, date, tenor_days)
-        mask &= frame.expiration == expiration
-        frame = frame.loc[mask]
+        frame = frame.loc[frame.expiration == expiration]
         # strike
-        strike = self.find_strike(frame, strike)
-        mask = (frame.strike == strike)
-        frame = frame.loc[mask]
-        # option
-        n_options = frame.shape[0]
-        if n_options == 1:
-            return CBOEOption(underlying_symbol, root, expiration, option_type, strike)
-        elif n_options == 0:
-            raise RuntimeError(f'find_option: No options found')
-        else:
-            raise RuntimeError(f'find_option: More than one option found')
+        strike = self.find_strike(frame, spot * moneyness)
+        return CBOEOption(underlying_symbol, root, expiration, option_type, strike)
 
     @staticmethod
     def find_strike(frame, target_strike):
