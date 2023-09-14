@@ -7,17 +7,16 @@ from pyport.market.cboe import CBOEMarket
 
 
 path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.csv'
-option_data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
-path = os.path.join('~/data/yahoo/spx_bars.csv')
+market = CBOEMarket.from_path(path)
+
 underlying_symbol='^SPX'
 root = 'SPXW'
 moneyness = 1.0
 option_type = 'C'
 tenor_days = 7
 side = -1
-market = CBOEMarket(option_data)
 contract = None
-options = {}
+
 aum = 10000
 daily_pnls = pd.Series(0.0, index=market.date_range())
 aums = pd.Series(0.0, index=market.date_range())
@@ -41,7 +40,6 @@ for date in market.date_range():
                                       option_type=option_type, tenor_days=7, strike=strike)
         current_price = market.get_quote(date, contract)['bid']
         n_contracts = side * np.abs(aum) / current_price
-        options[date] = contract
     daily_pnls[date] = daily_pnl
     aum += daily_pnl
     aums[date] = aum

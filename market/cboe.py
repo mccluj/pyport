@@ -12,6 +12,11 @@ class CBOEMarket:
         self._quotes_cache = {}
         self._underlying_quotes_cache = {}
 
+    @classmethod
+    def from_path(cls, path):
+        data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
+        return CBOEMarket(data)
+        
     def find_data(self, cboe_option):
         mask = pd.Series(True, self._data.index)
         for attribute in ['underlying_symbol', 'root', 'expiration', 'option_type', 'strike']:
