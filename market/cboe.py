@@ -19,18 +19,6 @@ class CBOEMarket:
         data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
         return CBOEMarket(data)
         
-    def find_data(self, cboe_option):
-        mask = pd.Series(True, self._data.index)
-        for attribute in ['underlying_symbol', 'root', 'expiration', 'option_type', 'strike']:
-            if attribute == 'option_type':
-                if cboe_option.option_type == OptionType.PUT:
-                    mask &= self._data['option_type'] == 'P'
-                else:
-                    mask &= self._data['option_type'] == 'C'
-            else:
-                mask &= getattr(self._data, attribute) == getattr(cboe_option, attribute)
-        return self._data.loc[mask]
-        
     def find_option(self, date, spot, underlying_symbol, root, option_type, tenor_days, moneyness):
         """
         :param date: datetime object -- quote date
@@ -45,23 +33,11 @@ class CBOEMarket:
         index = pd.IndexSlice[date, underlying_symbol, root, option_type]
         frame = self._indexed_data.loc[index].reset_index()
         # expiration date
-        expiration = self.find_expiry(frame, date, tenor_days)
+        expiration = self._find_expiry(frame, date, tenor_days)
         frame = frame.loc[frame.expiration == expiration]
         # strike
-        strike = self.find_strike(frame, spot * moneyness)
+        strike = self._find_strike(frame, spot * moneyness)
         return CBOEOption(underlying_symbol, root, expiration, option_type, strike)
-
-    @staticmethod
-    def find_strike(frame, target_strike):
-        closest_index = (frame.strike - target_strike).abs().idxmin()
-        return frame.loc[closest_index, 'strike']
-
-    @staticmethod
-    def find_expiry(frame, date, tenor_days):
-        date = pd.Timestamp(date)
-        target_expiration = date + tenor_days * Day()
-        closest_index = (frame.expiration - target_expiration).abs().idxmin()
-        return frame.loc[closest_index, 'expiration']
 
     def date_range(self):
         return sorted(self._data.quote_date.unique())
@@ -75,7 +51,7 @@ class CBOEMarket:
         quotes = self._quotes_cache.get(option)
         if quotes is None:
             columns = ['bid_1545', 'ask_1545']
-            quotes = (self.find_data(option).set_index('quote_date')[columns]
+            quotes = (self._find_data(option).set_index('quote_date')[columns]
                       .rename(columns={'bid_1545': 'bid',
                                        'ask_1545': 'ask'}))
             quotes['mid'] = quotes.mean(axis=1)
@@ -96,3 +72,27 @@ class CBOEMarket:
                                        'underlying_ask_1545': 'ask'}))
             quotes['mid'] = quotes.mean(axis=1)
         return quotes.loc[date]
+
+    def _find_data(self, cboe_option):
+        mask = pd.Series(True, self._data.index)
+        for attribute in ['underlying_symbol', 'root', 'expiration', 'option_type', 'strike']:
+            if attribute == 'option_type':
+                if cboe_option.option_type == OptionType.PUT:
+                    mask &= self._data['option_type'] == 'P'
+                else:
+                    mask &= self._data['option_type'] == 'C'
+            else:
+                mask &= getattr(self._data, attribute) == getattr(cboe_option, attribute)
+        return self._data.loc[mask]
+
+    @staticmethod
+    def _find_strike(frame, target_strike):
+        closest_index = (frame.strike - target_strike).abs().idxmin()
+        return frame.loc[closest_index, 'strike']
+
+    @staticmethod
+    def _find_expiry(frame, date, tenor_days):
+        date = pd.Timestamp(date)
+        target_expiration = date + tenor_days * Day()
+        closest_index = (frame.expiration - target_expiration).abs().idxmin()
+        return frame.loc[closest_index, 'expiration']
