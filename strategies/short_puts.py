@@ -22,22 +22,20 @@ aum = 10000
 daily_pnls = pd.Series(0.0, index=market.date_range())
 aums = pd.Series(0.0, index=market.date_range())
 holdings = pd.Series(0.0, index=market.date_range())
-underlying_data = option_data[['quote_date', 'underlying_bid_1545', 'underlying_ask_1545']]
-underlying_prices = underlying_data.groupby('quote_date').first()
-spot_prices = underlying_prices.mean(axis=1)
+spot_prices = pd.Series(0.0, index=market.date_range())
 daily_pnl = 0                   # only needed until the first contract is created.
 for date in market.date_range():
     if contract is not None:
         if date >= contract.expiration:
-            underlying_price = spot_prices[date]
-            contract_payoff = calculate_payoff(contract, underlying_price)
+            spot = market.get_underlying_quote(date, underlying_symbol)['mid']
+            contract_payoff = calculate_payoff(contract, spot)
             daily_pnl = n_contracts * (contract_payoff - previous_price)
             contract = None
         else:
             current_price = prices.loc[date, 'ask_1545']
             daily_pnl = n_contracts * (current_price - previous_price)
     if contract is None:
-        spot = spot_prices[date]
+        spot = market.get_underlying_quote(date, underlying_symbol)['mid']
         strike = spot * moneyness
         contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
                                       option_type=option_type, tenor_days=7, strike=strike)
@@ -51,6 +49,7 @@ for date in market.date_range():
     aum += daily_pnl
     aums[date] = aum
     holdings[date] = n_contracts
+    spot_prices[date] = spot
     previous_price = current_price
 results = pd.concat([spot_prices, holdings, daily_pnls, aums], axis=1, keys=['SPX', 'holdings', 'pnl', 'aum'])
 
