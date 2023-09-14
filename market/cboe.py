@@ -29,17 +29,18 @@ class CBOEMarket:
                 mask &= getattr(self._data, attribute) == getattr(cboe_option, attribute)
         return self._data.loc[mask]
         
-    def find_option(self, date, underlying_symbol, root, option_type, tenor_days, strike):
+    def find_option(self, date, spot, underlying_symbol, root, option_type, tenor_days, moneyness):
         """
         :param date: datetime object -- quote date
         :param underlying_symbol: str
         :param root: str
         :param option_type: char ('C' or 'P')
         :param tenor_days: int
-        :param strike: float
+        :param moneyness: float
         :return: CBOEOPtion
         """
         date = pd.Timestamp(date)
+        strike = spot * moneyness
         frame = self._data
         # date
         mask = (frame.quote_date == date)
