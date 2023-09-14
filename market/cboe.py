@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import Day
-from pyport.core.cboe_option import CBOEOption, OptionType
+from pyport.core.cboe_option import CBOEOption, OptionType, calculate_payoff
 
 
 class CBOEMarket:
@@ -73,13 +73,6 @@ class CBOEMarket:
         return sorted(self._data.quote_date.unique())
 
 
-def calculate_payoff(option, underlying_price):
-    if option.option_type == OptionType.CALL:
-        payoff = np.maximum(0.0, underlying_price - option.strike)
-    else:
-        payoff = np.maximum(0.0, option.strike - underlying_price)
-    return payoff
-
 path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.csv'
 option_data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
 path = os.path.join('~/data/yahoo/spx_bars.csv')
@@ -88,12 +81,14 @@ root = 'SPXW'
 moneyness = 1.0
 option_type = 'C'
 tenor_days = 7
+side = -1
 market = CBOEMarket(option_data)
 contract = None
 options = {}
 aum = 10000
 daily_pnls = pd.Series(0.0, index=market.date_range())
 aums = pd.Series(0.0, index=market.date_range())
+holdings = pd.Series(0.0, index=market.date_range())
 underlying_data = option_data[['quote_date', 'underlying_bid_1545', 'underlying_ask_1545']]
 underlying_prices = underlying_data.groupby('quote_date').first()
 spot_prices = underlying_prices.mean(axis=1)
@@ -115,14 +110,15 @@ for date in market.date_range():
                                       option_type=option_type, tenor_days=7, strike=strike)
         prices = market.find_data(contract).set_index('quote_date')[['bid_1545', 'ask_1545', 'underlying_bid_1545', 'underlying_ask_1545']]
         current_price = prices.loc[date, 'bid_1545']
-        n_contracts = aum / current_price
+        n_contracts = side * np.abs(aum) / current_price
         options[date] = contract
         # print(pd.Timestamp(date).date(), contract.as_tuple())
         # print(prices)
     daily_pnls[date] = daily_pnl
     aum += daily_pnl
     aums[date] = aum
+    holdings[date] = n_contracts
     previous_price = current_price
-results = pd.concat([spot_prices, daily_pnls, aums], axis=1, keys=['SPX', 'pnl', 'aum'])
+results = pd.concat([spot_prices, holdings, daily_pnls, aums], axis=1, keys=['SPX', 'holdings', 'pnl', 'aum'])
 
 print(results)

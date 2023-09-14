@@ -1,4 +1,5 @@
 """Options that incorporate CBOE qualifiers."""
+import numpy as np
 import pandas as pd
 from enum import Enum
 
@@ -32,3 +33,12 @@ class CBOEOption:
         else:
             option_type = 'P'
         return (self.underlying_symbol, self.root, self.expiration, option_type, self.strike)
+
+
+def calculate_payoff(option, underlying_price):
+    if option.option_type == OptionType.CALL:
+        payoff = np.maximum(0.0, underlying_price - option.strike)
+    else:
+        payoff = np.maximum(0.0, option.strike - underlying_price)
+    return payoff
+
