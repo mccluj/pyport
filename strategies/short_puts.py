@@ -13,16 +13,16 @@ config = dict(
     underlying_symbol='^SPX',
     root='SPXW',
     moneyness=1.0,
-    option_type='C',
+    option_type='P',
     tenor_days=7,
 )
+initial_aum = 10000
+side = -0.1
 
-contract = None
-
-side = -1
-aum = 10000
+aum = initial_aum
 results = pd.DataFrame(0.0, index=market.date_range(), columns=['spot', 'holdings', 'daily_pnl', 'aum'])
 daily_pnl = 0                   # only needed until the first contract is created.
+contract = None
 for date in market.date_range():
     spot = market.get_underlying_quote(date, config['underlying_symbol'])['mid']
     if contract is not None:
@@ -40,5 +40,6 @@ for date in market.date_range():
     aum += daily_pnl
     results.loc[date] = (spot, n_contracts, daily_pnl, aum)
     previous_price = current_price
+results['underlying_aum'] = 10000 * results['spot'] / results['spot'].iloc[0]
 
 print(results)
