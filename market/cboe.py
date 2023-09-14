@@ -1,5 +1,6 @@
 """Initialize with CBOE price files and provide interface to data consumers."""
 import os
+import numpy as np
 import pandas as pd
 from pandas.tseries.offsets import Day
 from pyport.core.cboe_option import CBOEOption, OptionType
@@ -72,6 +73,12 @@ class CBOEMarket:
         return sorted(self._data.quote_date.unique())
 
 
+def calculate_payoff(option, underlying_price):
+    if option.option_type == OptionType.CALL:
+        payoff = np.maximum(0.0, underlying_price - option.strike)
+    else:
+        payoff = np.maximum(0.0, option.strike - underlying_price)
+    return payoff
 
 path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.csv'
 option_data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
@@ -87,17 +94,37 @@ market = CBOEMarket(option_data)
 contract = None
 options = {}
 aum = 10000
-
+daily_pnls = pd.Series(0.0, index=market.date_range())
+aums = pd.Series(0.0, index=market.date_range())
+underlying_data = option_data[['quote_date', 'underlying_bid_1545', 'underlying_ask_1545']]
+underlying_prices = underlying_data.groupby('quote_date').first()
+underlying_prices['mid_1545'] = underlying_prices.mean(axis=1)
+daily_pnl = 0                   # only needed until the first contract is created.
 for date in market.date_range():
     if contract is not None:
         if date >= contract.expiration:
+            underlying_price = underlying_prices.loc[date, 'mid_1545']
+            contract_payoff = calculate_payoff(contract, underlying_price)
+            daily_pnl = n_contracts * (contract_payoff - previous_price)
             contract = None
+        else:
+            current_price = prices.loc[date, 'ask_1545']
+            daily_pnl = n_contracts * (current_price - previous_price)
     if contract is None:
         spot = spot_prices[date]
         strike = spot * moneyness
         contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
                                       option_type=option_type, tenor_days=7, strike=strike)
+        prices = market.find_data(contract).set_index('quote_date')[['bid_1545', 'ask_1545', 'underlying_bid_1545', 'underlying_ask_1545']]
+        current_price = prices.loc[date, 'bid_1545']
+        n_contracts = aum / current_price
         options[date] = contract
-    prices = market.find_data(contract).set_index('quote_date')[['bid_1545', 'ask_1545', 'underlying_bid_1545', 'underlying_ask_1545']]
-    print(pd.Timestamp(date).date(), contract.as_tuple())
-    print(prices)
+        # print(pd.Timestamp(date).date(), contract.as_tuple())
+        # print(prices)
+    daily_pnls[date] = daily_pnl
+    aum += daily_pnl
+    aums[date] = aum
+    previous_price = current_price
+results = pd.concat([underlying_prices.mid_1545, daily_pnls, aums], axis=1, keys=['SPX', 'pnl', 'aum'])
+
+print(results)
