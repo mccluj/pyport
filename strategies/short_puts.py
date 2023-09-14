@@ -32,19 +32,16 @@ for date in market.date_range():
             daily_pnl = n_contracts * (contract_payoff - previous_price)
             contract = None
         else:
-            current_price = prices.loc[date, 'ask_1545']
+            current_price = market.get_quote(date, contract)['ask']
             daily_pnl = n_contracts * (current_price - previous_price)
     if contract is None:
         spot = market.get_underlying_quote(date, underlying_symbol)['mid']
         strike = spot * moneyness
         contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
                                       option_type=option_type, tenor_days=7, strike=strike)
-        prices = market.find_data(contract).set_index('quote_date')[['bid_1545', 'ask_1545', 'underlying_bid_1545', 'underlying_ask_1545']]
-        current_price = prices.loc[date, 'bid_1545']
+        current_price = market.get_quote(date, contract)['bid']
         n_contracts = side * np.abs(aum) / current_price
         options[date] = contract
-        # print(pd.Timestamp(date).date(), contract.as_tuple())
-        # print(prices)
     daily_pnls[date] = daily_pnl
     aum += daily_pnl
     aums[date] = aum
