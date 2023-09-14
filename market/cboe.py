@@ -8,7 +8,7 @@ from pyport.core.cboe_option import CBOEOption, OptionType, calculate_payoff
 
 class CBOEMarket:
     def __init__(self, data):
-        index_columns = ['quote_date', 'underlying_symbol', 'root', 'option_type']
+        index_columns = ['quote_date', 'underlying_symbol', 'root', 'option_type', 'expiration', 'strike']
         self._data = data
         self._indexed_data = data.set_index(index_columns).sort_index()
         self._quotes_cache = {}
@@ -73,17 +73,15 @@ class CBOEMarket:
             quotes['mid'] = quotes.mean(axis=1)
         return quotes.loc[date]
 
-    def _find_data(self, cboe_option):
-        mask = pd.Series(True, self._data.index)
-        for attribute in ['underlying_symbol', 'root', 'expiration', 'option_type', 'strike']:
-            if attribute == 'option_type':
-                if cboe_option.option_type == OptionType.PUT:
-                    mask &= self._data['option_type'] == 'P'
-                else:
-                    mask &= self._data['option_type'] == 'C'
-            else:
-                mask &= getattr(self._data, attribute) == getattr(cboe_option, attribute)
-        return self._data.loc[mask]
+    def _find_data(self, option):
+        index = pd.IndexSlice[:,  # skip quote_date
+                              option.underlying_symbol,
+                              option.root,
+                              option.option_type.value,
+                              option.expiration,
+                              option.strike]
+        data = self._indexed_data.loc[index, :].reset_index()
+        return data
 
     @staticmethod
     def _find_strike(frame, target_strike):
