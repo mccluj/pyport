@@ -21,10 +21,7 @@ contract = None
 
 side = -1
 aum = 10000
-daily_pnls = pd.Series(0.0, index=market.date_range())
-aums = pd.Series(0.0, index=market.date_range())
-holdings = pd.Series(0.0, index=market.date_range())
-spot_prices = pd.Series(0.0, index=market.date_range())
+results = pd.DataFrame(0.0, index=market.date_range(), columns=['spot', 'holdings', 'daily_pnl', 'aum'])
 daily_pnl = 0                   # only needed until the first contract is created.
 for date in market.date_range():
     spot = market.get_underlying_quote(date, config['underlying_symbol'])['mid']
@@ -37,17 +34,11 @@ for date in market.date_range():
             current_price = market.get_quote(date, contract)['ask']
             daily_pnl = n_contracts * (current_price - previous_price)
     if contract is None:
-        # contract = market.find_option(date=date, underlying_symbol=underlying_symbol, root=root,
-        #                               option_type=option_type, tenor_days=7, strike=strike)
         contract = market.find_option(date=date, spot=spot, **config)
         current_price = market.get_quote(date, contract)['bid']
         n_contracts = side * np.abs(aum) / current_price
-    daily_pnls[date] = daily_pnl
     aum += daily_pnl
-    aums[date] = aum
-    holdings[date] = n_contracts
-    spot_prices[date] = spot
+    results.loc[date] = (spot, n_contracts, daily_pnl, aum)
     previous_price = current_price
-results = pd.concat([spot_prices, holdings, daily_pnls, aums], axis=1, keys=['SPX', 'holdings', 'pnl', 'aum'])
 
 print(results)
