@@ -32,7 +32,8 @@ class CBOEOption:
             option_type = 'C'
         else:
             option_type = 'P'
-        return (self.underlying_symbol, self.root, self.expiration.date(), option_type, self.strike)
+        expiration = f'{self.expiration.date()}'
+        return (self.underlying_symbol, self.root, expiration, option_type, self.strike)
 
 
 def calculate_payoff(option, underlying_price):

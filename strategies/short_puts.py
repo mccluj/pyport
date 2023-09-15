@@ -32,10 +32,11 @@ def simulate_strategy(market, config, initial_aum, participation):
         if contract is not None:
             if date >= contract.expiration:
                 contract_payoff = calculate_payoff(contract, spot)
+                value = n_contracts * contract_payoff
                 contract_pnl = n_contracts * (contract_payoff - initial_price)
-                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f",
-                              date.date(), spot, n_contracts, contract_payoff, contract_pnl)
                 daily_pnl = n_contracts * (contract_payoff - previous_price)
+                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f pnl: %.2f aum: %.2f",
+                              date.date(), spot, n_contracts, contract_payoff, value, contract_pnl, aum + daily_pnl)
                 contract = None
             else:
                 current_price = market.get_quote(date, contract)['ask']
@@ -45,8 +46,8 @@ def simulate_strategy(market, config, initial_aum, participation):
             initial_price = market.get_quote(date, contract)['bid']
             n_contracts = participation * np.abs(aum) / initial_price
             value = n_contracts * initial_price
-            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f %s",
-                          date.date(), spot, n_contracts, initial_price, value, contract.as_tuple())
+            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f aum: %.2f %s",
+                          date.date(), spot, n_contracts, initial_price, value, aum, contract.as_tuple())
             current_price = initial_price
         aum += daily_pnl
         results.loc[date] = (spot, n_contracts, daily_pnl, aum)
