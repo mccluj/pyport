@@ -20,9 +20,9 @@ config = dict(
     tenor_days=7,
 )
 initial_aum = 10000
-side = -0.1
+participation = -0.1
 
-def simulate_strategy(market, config, initial_aum, side):
+def simulate_strategy(market, config, initial_aum, participation):
     aum = initial_aum
     results = pd.DataFrame(0.0, index=market.date_range(), columns=['spot', 'holdings', 'daily_pnl', 'aum'])
     daily_pnl = 0                   # only needed until the first contract is created.
@@ -33,8 +33,8 @@ def simulate_strategy(market, config, initial_aum, side):
             if date >= contract.expiration:
                 contract_payoff = calculate_payoff(contract, spot)
                 contract_pnl = n_contracts * (contract_payoff - initial_price)
-                logging.debug("%s: expiration %s %s, pnl: %s",
-                              date.date(), f'{spot:.2f}', contract_payoff, daily_pnl)
+                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f",
+                              date.date(), spot, n_contracts, contract_payoff, contract_pnl)
                 daily_pnl = n_contracts * (contract_payoff - previous_price)
                 contract = None
             else:
@@ -43,11 +43,10 @@ def simulate_strategy(market, config, initial_aum, side):
         if contract is None:
             contract = market.find_option(date=date, spot=spot, **config)
             initial_price = market.get_quote(date, contract)['bid']
-            n_contracts = side * np.abs(aum) / initial_price
+            n_contracts = participation * np.abs(aum) / initial_price
             value = n_contracts * initial_price
-            logging.debug("%s: rebalance  %s %s = %s @ %s %s",
-                          date.date(), f'{spot:.2f}', f'{value:.2f}', f'{n_contracts:.2f}',
-                          initial_price, contract.as_tuple())
+            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f %s",
+                          date.date(), spot, n_contracts, initial_price, value, contract.as_tuple())
             current_price = initial_price
         aum += daily_pnl
         results.loc[date] = (spot, n_contracts, daily_pnl, aum)
@@ -58,24 +57,25 @@ def simulate_strategy(market, config, initial_aum, side):
 
 def compare_leverage_ratios():
     summary = {}
-    for side in np.arange(-0.1, 0.01, 0.01):
-        key = f'{side:.0%}'
+    for participation in np.arange(-0.1, 0.01, 0.01):
+        key = f'{participation:.0%}'
         print(f'leverage: {key}')
-        results = simulate_strategy(market, config, initial_aum, side)
+        results = simulate_strategy(market, config, initial_aum, participation)
         summary[key] = results.aum
 
     pd.DataFrame(summary).to_csv('short_puts.csv')
 
 
 def main():
-    results = simulate_strategy(market=market, config=config, initial_aum=10000, side=0.10)
-    print(results)
+    results = simulate_strategy(market=market, config=config, initial_aum=10000, participation=-0.10)
+    # print(results)
 
 
 if __name__ == '__main__':
     log_file = 'backtest.log'
     log_file = None
     logging.basicConfig(filename=log_file, level=logging.DEBUG,
-                        format='%(levelname)s - %(message)s')
-                        # format='%(asctime)s - %(levelname)s - %(message)s')
+                        # format='%(asctime)s - %(levelname)s - %(message)s',
+                        format='%(asctime)s - %(message)s',
+                        datefmt='%H:%M:%S')
     main()
