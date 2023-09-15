@@ -7,10 +7,10 @@ from pyport.core.cboe_option import CBOEOption, OptionType, calculate_payoff
 from pyport.market.cboe import CBOEMarket
 
 
-# path = '~/data/cboe/UnderlyingOptionsEODCalcs.pkl'
-# market = CBOEMarket.from_pickle(path)
-path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.zip'
-market = CBOEMarket.from_csv(path)
+path = '~/data/cboe/UnderlyingOptionsEODCalcs.pkl'
+market = CBOEMarket.from_pickle(path)
+# path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.zip'
+# market = CBOEMarket.from_csv(path)
 
 config = dict(
     underlying_symbol='^SPX',
@@ -29,6 +29,7 @@ def simulate_strategy(market, config, initial_aum, participation):
     contract = None
     for date in market.date_range():
         spot = market.get_underlying_quote(date, config['underlying_symbol'])['mid']
+        print(f'{date} {spot:8.2f}', flush=True)
         if contract is not None:
             if date >= contract.expiration:
                 contract_payoff = calculate_payoff(contract, spot)
@@ -69,12 +70,13 @@ def compare_leverage_ratios():
 
 def main():
     results = simulate_strategy(market=market, config=config, initial_aum=10000, participation=-0.10)
+    results.to_csv('short_10%_put.csv')
     # print(results)
 
 
 if __name__ == '__main__':
-    log_file = 'backtest.log'
     log_file = None
+    log_file = 'backtest.log'
     logging.basicConfig(filename=log_file, level=logging.DEBUG,
                         # format='%(asctime)s - %(levelname)s - %(message)s',
                         format='%(asctime)s - %(message)s',
