@@ -15,8 +15,13 @@ class CBOEMarket:
         self._underlying_quotes_cache = {}
 
     @classmethod
-    def from_path(cls, path):
+    def from_csv(cls, path):
         data = pd.read_csv(path, parse_dates=['quote_date', 'expiration'])
+        return CBOEMarket(data)
+        
+    @classmethod
+    def from_pickle(cls, path):
+        data = pd.read_pickle(path)
         return CBOEMarket(data)
         
     def find_option(self, date, spot, underlying_symbol, root, option_type, tenor_days, moneyness):
@@ -40,7 +45,8 @@ class CBOEMarket:
         return CBOEOption(underlying_symbol, root, expiration, option_type, strike)
 
     def date_range(self):
-        return sorted(self._data.quote_date.unique())
+        dates = pd.Series(self._data.quote_date.unique())
+        return dates.sort_values()
         
     def get_quote(self, date, option):
         """
