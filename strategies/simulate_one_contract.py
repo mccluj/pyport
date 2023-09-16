@@ -19,12 +19,10 @@ config = dict(
     option_type='C',
     tenor_days=7,
 )
-initial_aum = 10000
 
-def simulate_strategy(market, config, initial_aum):
-    aum = initial_aum
+def simulate_strategy(market, config):
     results = pd.DataFrame(0.0, index=pd.Index(market.date_range(), name='Date'),
-                           columns=['spot', 'holdings', 'price', 'delta', 'daily_pnl', 'aum'])
+                           columns=['spot', 'holdings', 'price', 'delta', 'daily_pnl'])
     daily_pnl = 0                   # only needed until the first contract is created.
     contract = None
     n_contracts = 1
@@ -36,8 +34,8 @@ def simulate_strategy(market, config, initial_aum):
                 value = n_contracts * contract_payoff
                 contract_pnl = n_contracts * (contract_payoff - initial_price)
                 daily_pnl = n_contracts * (contract_payoff - previous_price)
-                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f pnl: %.2f aum: %.2f",
-                              date.date(), spot, n_contracts, contract_payoff, value, contract_pnl, aum + daily_pnl)
+                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f pnl: %.2f",
+                              date.date(), spot, n_contracts, contract_payoff, value, contract_pnl)
                 contract = None
             else:
                 current_price = market.get_quote(date, contract)['ask']
@@ -46,19 +44,18 @@ def simulate_strategy(market, config, initial_aum):
             contract = market.find_option(date=date, spot=spot, **config)
             initial_price = market.get_quote(date, contract)['bid']
             value = n_contracts * initial_price
-            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f aum: %.2f %s",
-                          date.date(), spot, n_contracts, initial_price, value, aum, contract.as_tuple())
+            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f %s",
+                          date.date(), spot, n_contracts, initial_price, value, contract.as_tuple())
             current_price = initial_price
-        aum += daily_pnl
         delta = market.get_delta(date, contract)
-        results.loc[date] = (spot, n_contracts, current_price, delta, daily_pnl, aum)
+        results.loc[date] = (spot, n_contracts, current_price, delta, daily_pnl)
         previous_price = current_price
-        print(f'{date} spot={spot:8.2f} price={current_price:8.2f} aum={aum:8.2f}', flush=True)
+        print(f'{date} spot={spot:8.2f} price={current_price:8.2f}', flush=True)
     return results
 
 
 def main():
-    results = simulate_strategy(market=market, config=config, initial_aum=10000)
+    results = simulate_strategy(market=market, config=config)
     results.to_csv('simulate_one_contract.csv')
     # print(results)
 
