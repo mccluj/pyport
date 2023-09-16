@@ -22,33 +22,30 @@ config = dict(
 
 def simulate_strategy(market, config):
     results = pd.DataFrame(0.0, index=pd.Index(market.date_range(), name='Date'),
-                           columns=['spot', 'holdings', 'price', 'delta', 'daily_pnl'])
+                           columns=['spot', 'price', 'delta', 'daily_pnl'])
     daily_pnl = 0                   # only needed until the first contract is created.
     contract = None
-    n_contracts = 1
     for date in market.date_range():
         spot = market.get_underlying_quote(date, config['underlying_symbol'])['mid']
         if contract is not None:
             if date >= contract.expiration:
                 contract_payoff = calculate_payoff(contract, spot)
-                value = n_contracts * contract_payoff
-                contract_pnl = n_contracts * (contract_payoff - initial_price)
-                daily_pnl = n_contracts * (contract_payoff - previous_price)
-                logging.debug("%s %.2f: EXP %.2f shs @ %.2f = %.2f pnl: %.2f",
-                              date.date(), spot, n_contracts, contract_payoff, value, contract_pnl)
+                contract_pnl = contract_payoff - initial_price
+                daily_pnl = contract_payoff - previous_price
+                logging.debug("%s %.2f: EXP contract_payoff=%.2f daily_pnl=%.2f contract_pnl: %.2f",
+                              date.date(), spot, contract_payoff, daily_pnl, contract_pnl)
                 contract = None
             else:
                 current_price = market.get_quote(date, contract)['ask']
-                daily_pnl = n_contracts * (current_price - previous_price)
+                daily_pnl = current_price - previous_price
         if contract is None:
             contract = market.find_option(date=date, spot=spot, **config)
             initial_price = market.get_quote(date, contract)['bid']
-            value = n_contracts * initial_price
-            logging.debug("%s %.2f: ACQ %.2f shs @ %.2f = %.2f %s",
-                          date.date(), spot, n_contracts, initial_price, value, contract.as_tuple())
+            logging.debug("%s %.2f: ACQ price=%.2f %s",
+                          date.date(), spot, initial_price, contract.as_tuple())
             current_price = initial_price
         delta = market.get_delta(date, contract)
-        results.loc[date] = (spot, n_contracts, current_price, delta, daily_pnl)
+        results.loc[date] = (spot, current_price, delta, daily_pnl)
         previous_price = current_price
         print(f'{date} spot={spot:8.2f} price={current_price:8.2f}', flush=True)
     return results
