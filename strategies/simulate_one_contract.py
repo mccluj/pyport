@@ -59,7 +59,7 @@ def main():
 
 if __name__ == '__main__':
     log_file = None
-    log_file = 'backtest.log'
+    log_file = f"{__file__.split('.')[0]}.log"
     logging.basicConfig(filename=log_file, level=logging.DEBUG,
                         # format='%(asctime)s - %(levelname)s - %(message)s',
                         format='%(asctime)s - %(message)s',
