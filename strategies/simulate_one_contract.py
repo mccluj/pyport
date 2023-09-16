@@ -8,9 +8,9 @@ from pyport.market.cboe import CBOEMarket
 
 
 path = '~/data/cboe/UnderlyingOptionsEODCalcs.pkl'
-# market = CBOEMarket.from_pickle(path)
+market = CBOEMarket.from_pickle(path)
 path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.zip'
-market = CBOEMarket.from_csv(path)
+# market = CBOEMarket.from_csv(path)
 
 config = dict(
     underlying_symbol='^SPX',
