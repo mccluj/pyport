@@ -7,19 +7,31 @@ from pyport.core.cboe_option import CBOEOption, OptionType, calculate_payoff
 from pyport.market.cboe import CBOEMarket
 
 
-path = '~/data/cboe/UnderlyingOptionsEODCalcs.pkl'
-market = CBOEMarket.from_pickle(path)
-path = '~/data/cboe/UnderlyingOptionsEODCalcs_2022-08.zip'
+# path = '~/data/cboe/SPX/UnderlyingOptionsEODCalcs.pkl'
+# market = CBOEMarket.from_pickle(path)
+path = '~/data/cboe/SPX/UnderlyingOptionsEODCalcs_2022-08.zip'
 # market = CBOEMarket.from_csv(path)
+path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_2022-11.zip'
+# market = CBOEMarket.from_csv(path)
+path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes.pkl'
+market = CBOEMarket.from_pickle(path)
 
-config = dict(
+SPX_config = dict(
     underlying_symbol='^SPX',
     root='SPXW',
     moneyness=1.0,
-    option_type='C',
+    option_type='P',
+    tenor_days=7,
+)
+SPY_config = dict(
+    underlying_symbol='SPY',
+    root='SPY',
+    moneyness=1.0,
+    option_type='P',
     tenor_days=7,
 )
 
+delta = 0.5
 def simulate_strategy(market, config):
     results = pd.DataFrame(0.0, index=pd.Index(market.date_range(), name='Date'),
                            columns=['spot', 'price', 'delta', 'daily_pnl'])
@@ -44,7 +56,7 @@ def simulate_strategy(market, config):
             logging.debug("%s %.2f: ACQ price=%.2f %s",
                           date.date(), spot, initial_price, contract.as_tuple())
             current_price = initial_price
-        delta = market.get_delta(date, contract)
+        # delta = market.get_delta(date, contract)
         results.loc[date] = (spot, current_price, delta, daily_pnl)
         previous_price = current_price
         print(f'{date} spot={spot:8.2f} price={current_price:8.2f}', flush=True)
@@ -52,7 +64,7 @@ def simulate_strategy(market, config):
 
 
 def main():
-    results = simulate_strategy(market=market, config=config)
+    results = simulate_strategy(market=market, config=SPY_config)
     results.to_csv('simulate_one_contract.csv')
     # print(results)
 
