@@ -20,12 +20,13 @@ class OptionType(Enum):
 
 
 class CBOEOption:
-    def __init__(self, underlying_symbol, root, expiration, option_type, strike):
+    def __init__(self, underlying_symbol, root, expiration, option_type, strike, option_id=None):
         self.underlying_symbol = underlying_symbol
         self.root = root
         self.expiration = pd.Timestamp(expiration)
         self.option_type = OptionType.lookup(option_type)
         self.strike = strike
+        self.option_id = option_id
 
     def as_tuple(self):
         if self.option_type == OptionType.CALL:

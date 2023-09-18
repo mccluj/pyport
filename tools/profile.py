@@ -10,8 +10,8 @@ stats = pstats.Stats('output.pstats')
 stats.strip_dirs()
 
 # Sort statistics by the cumulative time spent in the function
-# stats.sort_stats('cumulative')
-stats.sort_stats('tottime')
+stats.sort_stats('cumulative')
+# stats.sort_stats('tottime')
 
 # Display the stats
 stats.print_stats()
