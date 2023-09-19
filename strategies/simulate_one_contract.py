@@ -1,4 +1,9 @@
-"""Simulate cash-secured pub strategy at different leverages."""
+"""Simulate cash-secured pub strategy at different leverages.
+TODO:
+1. write module to compute metrics from results
+2. (?) Save cboe pickle file with quote_date as index
+3. Run alternate strategies with one market load.
+"""
 import os
 import logging
 import numpy as np
@@ -24,7 +29,7 @@ SPY_config = dict(
     underlying_symbol='SPY',
     root='SPY',
     moneyness=1.0,
-    option_type='P',
+    option_type='C',
     tenor_days=7,
 )
 cboe_config = SPX_config
@@ -35,7 +40,7 @@ def simulate_strategy(market, config):
     contract = None
     dates = market.date_range()
     results = pd.DataFrame(0.0, index=pd.Index(dates, name='Date'),
-                           columns=['spot', 'price', 'delta', 'daily_pnl'])
+                           columns=['spot', 'price', 'delta', 'daily_pnl', 'option_type', 'expiration', 'strike'])
     daily_pnl = 0                   # only needed until the first contract is created.
     for date in dates:
         market.set_date(date)
@@ -58,14 +63,16 @@ def simulate_strategy(market, config):
                           date.date(), spot, initial_price, contract.as_tuple())
             current_price = initial_price
         # delta = market.get_delta(date, contract)
-        results.loc[date] = (spot, current_price, delta, daily_pnl)
+        results.loc[date] = (spot, current_price, delta, daily_pnl,
+                                                contract.option_type.value, contract.expiration.date(), contract.strike)
         previous_price = current_price
         print(f'{date} spot={spot:8.2f} price={current_price:8.2f}', flush=True)
     return results
 
 
 def main():
-    path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_with_option_id.pkl'
+    # path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_with_option_id.pkl'
+    path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_with_option_id_and_quote_date_index.pkl'
     print('Setup CBOEMarket')
     market = CBOEMarket.from_pickle(path)
     print('Start simulating')
