@@ -1,5 +1,7 @@
 import unittest
 from datetime import datetime, timedelta
+
+import pandas as pd
 from pandas import Timestamp
 from pyport.lib.black_scholes import black_scholes
 from pyport.core.option import Option, OptionPricingResult
@@ -9,7 +11,7 @@ class OptionTests(unittest.TestCase):
 
     def setUp(self):
         self.market = {
-            'date': datetime.now(),
+            'date': pd.Timestamp('3/1/2023'),
             'spot_prices': {'AAPL': 150.0},
             'volatilities': {'AAPL': 0.2},
             'dividend_rates': {'AAPL': 0.01},

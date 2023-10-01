@@ -36,9 +36,10 @@ cboe_config = SPX_config
 cboe_config = SPY_config
 
 delta = 0.5
-def simulate_strategy(market, config):
+def simulate_strategy(market, config, dates=None):
     contract = None
-    dates = market.date_range()
+    if dates is None:
+        dates = market.date_range()
     results = pd.DataFrame(0.0, index=pd.Index(dates, name='Date'),
                            columns=['spot', 'price', 'delta', 'daily_pnl', 'option_type', 'expiration', 'strike'])
     daily_pnl = 0                   # only needed until the first contract is created.
@@ -54,29 +55,33 @@ def simulate_strategy(market, config):
                               date.date(), spot, contract_payoff, daily_pnl, contract_pnl)
                 contract = None
             else:
-                current_price = market.get_quote(date, contract)['ask']
+                # current_price = market.get_quote(date, contract)['ask']
+                current_price = market.get_quote(date, contract)['mid']
                 daily_pnl = current_price - previous_price
         if contract is None:
             contract = market.find_option(date=date, spot=spot, **config)
-            initial_price = market.get_quote(date, contract)['bid']
+            # initial_price = market.get_quote(date, contract)['bid']
+            initial_price = market.get_quote(date, contract)['mid']
             logging.debug("%s %.2f: ACQ price=%.2f %s",
                           date.date(), spot, initial_price, contract.as_tuple())
             current_price = initial_price
         # delta = market.get_delta(date, contract)
         results.loc[date] = (spot, current_price, delta, daily_pnl,
-                                                contract.option_type.value, contract.expiration.date(), contract.strike)
+                             contract.option_type.value, contract.expiration.date(), contract.strike)
         previous_price = current_price
         print(f'{date} spot={spot:8.2f} price={current_price:8.2f}', flush=True)
     return results
 
 
 def main():
+    date_path = '~/data/cboe/SPY/dates.txt'
+    dates = pd.read_csv(date_path, parse_dates=[0], header=None)[0]
     # path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_with_option_id.pkl'
     path = '~/data/cboe/SPY/UnderlyingOptionsEODQuotes_with_option_id_and_quote_date_index.pkl'
     print('Setup CBOEMarket')
     market = CBOEMarket.from_pickle(path)
     print('Start simulating')
-    results = simulate_strategy(market=market, config=cboe_config)
+    results = simulate_strategy(market=market, config=cboe_config, dates=dates)
     results.to_csv('simulate_one_contract.csv')
     # print(results)
 

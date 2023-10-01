@@ -1,7 +1,7 @@
 from pyport.core.asset import Asset
 
 
-class Bundle(Asset):
+class Basket(Asset):
     def __init__(self, shares, assets):
         self.shares = shares
         self.assets = assets
