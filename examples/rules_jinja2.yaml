@@ -1,0 +1,14 @@
+rules:
+  - id: check_option_tenor
+    description: "Check if the tenor of any option is below a certain threshold"
+    conditions:
+      - type: "tenor"
+        asset_type: "option"
+        comparison: "less_than"
+        threshold: 12  # in months
+    actions:
+      - action_type: "rebalance_option"
+        sell:
+          asset_id: "{{ asset_id }}"  # Jinja2 placeholder
+        buy:
+          new_tenor: 60  # in months, specifying a new option to buy
