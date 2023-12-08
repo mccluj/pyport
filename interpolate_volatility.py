@@ -1,38 +1,34 @@
-import pandas as pd
+import numpy as np
+from scipy.interpolate import interp1d
 
-# Example volatility surface data
-data = {
-    (0.9, 30): 0.20, (1.0, 30): 0.18, (1.1, 30): 0.19,
-    (0.9, 60): 0.21, (1.0, 60): 0.19, (1.1, 60): 0.20,
-    (0.9, 90): 0.22, (1.0, 90): 0.20, (1.1, 90): 0.21
-}
-df = pd.DataFrame(list(data.items()), columns=['Moneyness_Days', 'Volatility'])
-df[['Moneyness', 'Days']] = pd.DataFrame(df['Moneyness_Days'].tolist(), index=df.index)
-df.drop('Moneyness_Days', axis=1, inplace=True)
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
 
-def interpolate_volatility(moneyness, days):
-    # Filter the slices for the given moneyness
-    relevant_slices = df[df['Moneyness'] == moneyness]
+def interpolate_volatility(vol_surface, moneyness, days, moneyness_levels, days_levels):
+    # Find the indices for the nearest days slices
+    idx_below = find_nearest(days_levels[days_levels <= days], days)
+    idx_above = find_nearest(days_levels[days_levels >= days], days)
 
-    # Find the days slice at or below and at or above
-    lower_slice = relevant_slices[relevant_slices['Days'] <= days].max()
-    upper_slice = relevant_slices[relevant_slices['Days'] >= days].min()
+    # Interpolate (or find) volatility for each slice
+    interp_below = interp1d(moneyness_levels, vol_surface[:, idx_below], fill_value="extrapolate")
+    vol_below = interp_below(moneyness)
 
-    # Check if exact match
-    if lower_slice['Days'] == days:
-        return lower_slice['Volatility']
-    elif upper_slice['Days'] == days:
-        return upper_slice['Volatility']
+    interp_above = interp1d(moneyness_levels, vol_surface[:, idx_above], fill_value="extrapolate")
+    vol_above = interp_above(moneyness)
 
-    # Weighted average
-    total_days_gap = upper_slice['Days'] - lower_slice['Days']
-    weight_lower = (upper_slice['Days'] - days) / total_days_gap
-    weight_upper = (days - lower_slice['Days']) / total_days_gap
+    # Weighted average based on days distance
+    total_distance = days_levels[idx_above] - days_levels[idx_below]
+    weight_below = (days_levels[idx_above] - days) / total_distance
+    weight_above = (days - days_levels[idx_below]) / total_distance
 
-    return weight_lower * lower_slice['Volatility'] + weight_upper * upper_slice['Volatility']
+    return vol_below * weight_below + vol_above * weight_above
 
 # Example usage
-moneyness = 1.0
-days = 45
-volatility = interpolate_volatility(moneyness, days)
-print(f"Interpolated Volatility for Moneyness {moneyness} and Days {days}: {volatility}")
+vol_surface = np.array([[...]])  # Your volatility data
+moneyness_levels = np.array([...])  # Your moneyness levels
+days_levels = np.array([...])  # Your days levels
+
+vol = interpolate_volatility(vol_surface, target_moneyness, target_days, moneyness_levels, days_levels)
+print("Interpolated Volatility:", vol)
