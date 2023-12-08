@@ -1,34 +1,44 @@
+import pandas as pd
 import numpy as np
-from scipy.interpolate import interp1d
 
-def find_nearest(array, value):
-    array = np.asarray(array)
-    idx = (np.abs(array - value)).argmin()
-    return idx
+def interpolate_volatility(df, target_days, target_moneyness):
+    # Step 1: Identify nearest columns
+    # Find the days to expiration closest to but less than or equal to target_days
+    lower_day = df.columns[df.columns <= target_days].max()
+    # Find the days to expiration closest to but greater than or equal to target_days
+    upper_day = df.columns[df.columns >= target_days].min()
 
-def interpolate_volatility(vol_surface, moneyness, days, moneyness_levels, days_levels):
-    # Find the indices for the nearest days slices
-    idx_below = find_nearest(days_levels[days_levels <= days], days)
-    idx_above = find_nearest(days_levels[days_levels >= days], days)
+    # Step 2: 1D Interpolation for each column
+    def interpolate_1d(col, target_moneyness):
+        # Interpolate within this column for the target moneyness
+        return np.interp(target_moneyness, df.index, df[col])
 
-    # Interpolate (or find) volatility for each slice
-    interp_below = interp1d(moneyness_levels, vol_surface[:, idx_below], fill_value="extrapolate")
-    vol_below = interp_below(moneyness)
+    lower_vol = interpolate_1d(lower_day, target_moneyness)
+    upper_vol = interpolate_1d(upper_day, target_moneyness)
 
-    interp_above = interp1d(moneyness_levels, vol_surface[:, idx_above], fill_value="extrapolate")
-    vol_above = interp_above(moneyness)
+    # Step 3: Weighted Average
+    if lower_day != upper_day:
+        # Weight by inverse of distance to target_days
+        total_interval = upper_day - lower_day
+        weight_lower = (upper_day - target_days) / total_interval
+        weight_upper = (target_days - lower_day) / total_interval
+        final_vol = lower_vol * weight_lower + upper_vol * weight_upper
+    else:
+        # If the target_days is exactly one of the columns, use that column's value
+        final_vol = lower_vol  # or upper_vol, they are the same in this case
 
-    # Weighted average based on days distance
-    total_distance = days_levels[idx_above] - days_levels[idx_below]
-    weight_below = (days_levels[idx_above] - days) / total_distance
-    weight_above = (days - days_levels[idx_below]) / total_distance
+    return final_vol
 
-    return vol_below * weight_below + vol_above * weight_above
+# Example DataFrame
+data = {
+    10: {0.9: 0.15, 1.0: 0.12, 1.1: 0.10},
+    20: {0.9: 0.16, 1.0: 0.13, 1.1: 0.11},
+    30: {0.9: 0.17, 1.0: 0.14, 1.1: 0.12}
+}
+df = pd.DataFrame(data)
 
 # Example usage
-vol_surface = np.array([[...]])  # Your volatility data
-moneyness_levels = np.array([...])  # Your moneyness levels
-days_levels = np.array([...])  # Your days levels
-
-vol = interpolate_volatility(vol_surface, target_moneyness, target_days, moneyness_levels, days_levels)
-print("Interpolated Volatility:", vol)
+target_days = 15
+target_moneyness = 1.05
+interpolated_volatility = interpolate_volatility(df, target_days, target_moneyness)
+print("Interpolated Volatility:", interpolated_volatility)
