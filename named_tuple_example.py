@@ -1,51 +1,43 @@
-from typing import NamedTuple, List
+from typing import NamedTuple
+import pandas as pd
 
-class Asset:
+class AssetPricing:
+    """Represents the pricing information for a generic asset.
+
+    Attributes:
+        name: The name of the asset.
+        price: The price of the asset.
+        date: The date for which the price is applicable.
+    """
     name: str
     price: float
+    date: pd.Timestamp
 
-    def __init__(self, name: str, price: float):
+    def __init__(self, name: str, price: float, date: pd.Timestamp) -> None:
         self.name = name
         self.price = price
+        self.date = date
 
-class Stock(Asset):
-    dividend: float
+class BondPricing(AssetPricing):
+    """Represents the pricing information for a bond asset, including bond-specific metrics.
 
-    def __init__(self, name: str, price: float, dividend: float):
-        super().__init__(name, price)
-        self.dividend = dividend
-
-class Option(Asset):
-    greeks: NamedTuple
-
-    def __init__(self, name: str, price: float, greeks: NamedTuple):
-        super().__init__(name, price)
-        self.greeks = greeks
-
-class Bond(Asset):
+    Attributes:
+        metrics: A named tuple containing bond-specific metrics such as duration and convexity.
+    """
     metrics: NamedTuple
 
-    def __init__(self, name: str, price: float, metrics: NamedTuple):
-        super().__init__(name, price)
+    def __init__(self, name: str, price: float, date: pd.Timestamp, metrics: NamedTuple) -> None:
+        super().__init__(name, price, date)
         self.metrics = metrics
 
-# Example NamedTuple for Greeks and Metrics
-class OptionGreeks(NamedTuple):
-    delta: float
-    gamma: float
-    # Add other greeks as needed
+class OptionPricing(AssetPricing):
+    """Represents the pricing information for an option asset, including option greeks.
 
-class BondMetrics(NamedTuple):
-    duration: float
-    convexity: float
-    # Add other metrics as needed
+    Attributes:
+        greeks: A named tuple containing the option's greeks such as delta and gamma.
+    """
+    greeks: NamedTuple
 
-# Example usage
-option_greeks = OptionGreeks(delta=0.5, gamma=0.1)
-option = Option(name="Option XYZ", price=100.0, greeks=option_greeks)
-
-bond_metrics = BondMetrics(duration=5.0, convexity=1.2)
-bond = Bond(name="Bond ABC", price=105.0, metrics=bond_metrics)
-
-print(option.name, option.greeks)
-print(bond.name, bond.metrics)
+    def __init__(self, name: str, price: float, date: pd.Timestamp, greeks: NamedTuple) -> None:
+        super().__init__(name, price, date)
+        self.greeks = greeks
