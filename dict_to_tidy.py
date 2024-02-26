@@ -1,56 +1,45 @@
-import pandas as pd
+from collections import namedtuple
 
-def dict_to_tidy(df, current_path=None, current_data=None):
-    """
-    Recursively traverses a nested dictionary to collect paths and values,
-    converting them into a format suitable for a tidy DataFrame.
+# Define the structure of your named tuple
+Record = namedtuple('Record', 'outcome_period date asset category feature value')
 
-    :param df: The nested dictionary to convert.
-    :param current_path: The accumulated path keys, representing column labels.
-    :param current_data: Accumulated data rows.
-    :return: A list of dictionaries, where each dictionary represents a row in the tidy DataFrame.
-    """
-    if current_path is None:
-        current_path = []
-    if current_data is None:
-        current_data = []
+def flatten_nested_dict(nested_dict):
+    records = []
 
-    if isinstance(df, dict):
-        for key, value in df.items():
-            # Recurse into the dictionary, adding the current key to the path
-            dict_to_tidy(value, current_path + [key], current_data)
-    else:
-        # At a leaf node, construct a row from the path and the leaf node value
-        data_row = {path_key: path_value for path_key, path_value in zip(current_path, current_path)}
-        data_row['value'] = df  # Assuming the final value is what we want to capture
-        current_data.append(data_row)
-
-    return current_data
+    # Iterate through the levels of nesting
+    for outcome_period, dates in nested_dict.items():
+        for date, assets in dates.items():
+            for asset, categories in assets.items():
+                for category, features in categories.items():
+                    for feature, value in features.items():
+                        # For each combination, create a Record instance
+                        record = Record(outcome_period, date, asset, category, feature, value)
+                        records.append(record)
+    
+    return records
 
 # Example nested dictionary
 nested_dict = {
-    '2023': {
-        'January': {
-            'Sales': 150,
-            'Expenses': 100,
-        },
-        'February': {
-            'Sales': 200,
-            'Expenses': 150,
-        },
-    },
-    '2024': {
-        'January': {
-            'Sales': 180,
-            'Expenses': 130,
+    'Q1': {
+        '2023-01-01': {
+            'Asset1': {
+                'CategoryA': {
+                    'Feature1': 100,
+                    'Feature2': 200,
+                }
+            },
+            'Asset2': {
+                'CategoryB': {
+                    'Feature3': 300,
+                }
+            },
         },
     },
 }
 
-# Convert the nested dictionary to a tidy format
-tidy_data = dict_to_tidy(nested_dict)
+# Convert to list of named tuples
+records = flatten_nested_dict(nested_dict)
 
-# Convert the list of dictionaries to a DataFrame
-tidy_df = pd.DataFrame(tidy_data)
-
-print(tidy_df)
+# Example output
+for record in records:
+    print(record)
