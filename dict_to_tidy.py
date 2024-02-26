@@ -15,14 +15,15 @@ def dict_to_tidy(df, current_path=None, current_data=None):
     if current_data is None:
         current_data = []
 
-    # Check if the current item is a dictionary (to continue recursion) or a leaf node (to collect data)
     if isinstance(df, dict):
         for key, value in df.items():
             # Recurse into the dictionary, adding the current key to the path
             dict_to_tidy(value, current_path + [key], current_data)
     else:
-        # At a leaf node, combine the path with the leaf node value into a single dictionary
-        current_data.append({**{path[i]: val for i, val in enumerate(current_path)}, 'value': df})
+        # At a leaf node, construct a row from the path and the leaf node value
+        data_row = {path_key: path_value for path_key, path_value in zip(current_path, current_path)}
+        data_row['value'] = df  # Assuming the final value is what we want to capture
+        current_data.append(data_row)
 
     return current_data
 
