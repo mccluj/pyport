@@ -1,0 +1,52 @@
+import multiprocessing
+import psutil
+import time
+
+class BackgroundTaskRunner:
+    def __init__(self, priority='low'):
+        self.tasks = []
+        self.priority = priority
+
+    def set_process_priority(self, pid, low=True):
+        try:
+            p = psutil.Process(pid)
+            if low:
+                p.nice(psutil.IDLE_PRIORITY_CLASS)
+            else:
+                p.nice(psutil.NORMAL_PRIORITY_CLASS)
+        except Exception as e:
+            print(f"Error setting process priority: {e}")
+
+    def add_task(self, func, *args, **kwargs):
+        """Add a task to the runner."""
+        task = multiprocessing.Process(target=self.task_wrapper, args=(func,) + args, kwargs=kwargs)
+        self.tasks.append(task)
+
+    def task_wrapper(self, func, *args, **kwargs):
+        """Wrap the task function to adjust priority before execution."""
+        if self.priority == 'low':
+            self.set_process_priority(multiprocessing.current_process().pid, low=True)
+        else:
+            self.set_process_priority(multiprocessing.current_process().pid, low=False)
+        func(*args, **kwargs)
+
+    def run_all(self):
+        """Start all tasks and wait for them to complete."""
+        for task in self.tasks:
+            task.start()
+        for task in self.tasks:
+            task.join()
+
+# Example usage
+def example_task(duration, message):
+    print(f"Starting task: {message}")
+    time.sleep(duration)
+    print(f"Task completed: {message}")
+
+if __name__ == "__main__":
+    runner = BackgroundTaskRunner(priority='low')
+    runner.add_task(example_task, 2, message="Low priority task 1")
+    runner.add_task(example_task, 3, message="Low priority task 2")
+    print("Starting background tasks...")
+    runner.run_all()
+    print("All tasks completed.")
