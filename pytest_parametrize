@@ -1,0 +1,16 @@
+import pandas as pd
+import pytest
+
+# Example DataFrame
+df = pd.DataFrame({
+    'input1': [1, 2, 3],
+    'input2': [4, 5, 6],
+    'expected': [5, 7, 9]
+})
+
+# Convert DataFrame rows to list of tuples
+param_values = [tuple(row) for row in df.to_records(index=False)]
+
+@pytest.mark.parametrize("input1, input2, expected", param_values)
+def test_addition(input1, input2, expected):
+    assert input1 + input2 == expected
