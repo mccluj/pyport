@@ -1,0 +1,10 @@
+data;
+
+set STOCKS := AAPL MSFT GOOGL;
+
+param: expected_return transaction_cost initial_position :=
+    AAPL   0.12   -0.01   50
+    MSFT   0.15   -0.02   30
+    GOOGL  0.10   -0.015  40;
+
+param M := 10000;
