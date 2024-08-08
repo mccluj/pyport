@@ -4,29 +4,27 @@ set STOCKS;
 param expected_return{STOCKS};
 param transaction_cost{STOCKS};
 param initial_position{STOCKS};
+param max_trade{STOCKS};
 
 # Define decision variables
-var buy{STOCKS} >= 0;
-var sell{STOCKS} >= 0;
-var hold{STOCKS};
-var buy_indicator{STOCKS}, binary;
+var long_hold{STOCKS} >= 0 <= max_trade[STOCKS];
+var short_hold{STOCKS} >= 0 <= max_trade[STOCKS];
+var net_hold{STOCKS};
+var long_indicator{STOCKS}, binary;
 
 # Objective: Maximize portfolio return
 maximize total_return:
-    sum {s in STOCKS} (expected_return[s] * hold[s] - transaction_cost[s] * (buy[s] + sell[s]));
+    sum {s in STOCKS} (expected_return[s] * net_hold[s] - transaction_cost[s] * (long_hold[s] + short_hold[s]));
 
 # Constraints
 subject to
-    # Holdings update
-    holdings_update{s in STOCKS}:
-        hold[s] = initial_position[s] + buy[s] - sell[s];
+    # Net holdings update
+    net_holdings_update{s in STOCKS}:
+        net_hold[s] = initial_position[s] + long_hold[s] - short_hold[s];
 
-    # Ensure buy or sell but not both using the single indicator
-    buy_link{s in STOCKS}:
-        buy[s] <= M * buy_indicator[s];
+    # Ensure long or short but not both using the single indicator
+    long_short_exclusivity{s in STOCKS}:
+        long_hold[s] <= max_trade[s] * long_indicator[s];
 
-    sell_link{s in STOCKS}:
-        sell[s] <= M * (1 - buy_indicator[s]);
-
-# Big M should be a large number
-param M := 10000;
+    short_link{s in STOCKS}:
+        short_hold[s] <= max_trade[s] * (1 - long_indicator[s]);
