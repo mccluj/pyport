@@ -1,4 +1,7 @@
+import io
+import importlib
 from docx import Document
+from contextlib import redirect_stdout
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
@@ -67,7 +70,7 @@ class HelpDocumentGenerator:
         """
         self.doc.add_heading('Table of Contents', level=1)
 
-        # For each TOC entry, add it as a hyperlink
+        # For each TOC entry, add it as a hyperlink (not functional in docx, but we'll add a TOC field)
         for toc_entry in self.toc_entries:
             self.doc.add_paragraph(toc_entry)
 
