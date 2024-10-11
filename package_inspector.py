@@ -1,19 +1,21 @@
 import pkgutil
-import inspect
 import importlib
+import inspect
 
 class PackageInspector:
     """
     A class to inspect a Python package and list its modules, classes, functions, and subpackages.
     """
 
-    def __init__(self, package):
+    def __init__(self, package, subpackages=None):
         """
         Initialize the inspector with a package and create containers for storing results.
         
         :param package: The root package to inspect (e.g., `my_package`).
+        :param subpackages: List of subpackages to include. If None, inspect all subpackages.
         """
         self.package = package
+        self.subpackages_filter = subpackages or []  # List of subpackages to inspect (empty means all)
         self.data = {
             'modules': [],
             'classes': [],
@@ -26,7 +28,9 @@ class PackageInspector:
         Main method to inspect the package and gather its modules, classes, functions, and subpackages.
         """
         for importer, modname, ispkg in pkgutil.walk_packages(self.package.__path__, self.package.__name__ + "."):
-            self._process_module(modname, ispkg)
+            # Only process if it’s in the list of allowed subpackages, or no filter is applied
+            if not self.subpackages_filter or any(modname.startswith(sub) for sub in self.subpackages_filter):
+                self._process_module(modname, ispkg)
 
         return self.data
 
