@@ -1,0 +1,65 @@
+from docx import Document
+
+class HelpDocumentGenerator:
+    """
+    A class to generate a Word document from a list of Python objects such as modules, classes, and functions.
+    """
+
+    def __init__(self, output_file="reference_manual.docx"):
+        """
+        Initialize the generator with an output file for the Word document.
+        
+        :param output_file: Optional output filename for the Word document.
+        """
+        self.output_file = output_file
+        self.doc = Document()  # Initialize the Word document
+
+    def add_help_section(self, title, content):
+        """
+        Add a section to the Word document with a title and content.
+
+        :param title: The title of the section (e.g., module or class name).
+        :param content: The help text or other information to add to the document.
+        """
+        self.doc.add_page_break()  # Start new section on a new page
+        self.doc.add_heading(title, level=1)
+        self.doc.add_paragraph(content)
+
+    def generate_document(self, package_data):
+        """
+        Generate the Word document by iterating through the package data and adding help content.
+
+        :param package_data: Dictionary containing the introspected package data (modules, classes, functions, subpackages).
+        """
+        for modname in package_data['modules']:
+            help_text = self._get_help_text(modname)
+            self.add_help_section(f"Module: {modname}", help_text)
+
+        for cls in package_data['classes']:
+            help_text = self._get_help_text(cls)
+            self.add_help_section(f"Class: {cls}", help_text)
+
+        for func in package_data['functions']:
+            help_text = self._get_help_text(func)
+            self.add_help_section(f"Function: {func}", help_text)
+
+        for subpkg in package_data['subpackages']:
+            help_text = self._get_help_text(subpkg)
+            self.add_help_section(f"Subpackage: {subpkg}", help_text)
+
+        self.doc.save(self.output_file)
+        print(f"Word document generated: {self.output_file}")
+
+    @staticmethod
+    def _get_help_text(obj_name):
+        """
+        Dynamically retrieve the help text for an object by its name.
+
+        :param obj_name: The fully qualified name of the object.
+        :return: The captured help text for the object.
+        """
+        try:
+            obj = importlib.import_module(obj_name)
+            return inspect.getdoc(obj) or f"No documentation available for {obj_name}"
+        except ImportError:
+            return f"Could not import {obj_name}"
