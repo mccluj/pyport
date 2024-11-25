@@ -1,0 +1,14 @@
+(defun my/display-buffer-horizontally (buffer alist)
+  "Display BUFFER in a window split horizontally, regardless of window width."
+  (let ((window (split-window-horizontally)))
+    (set-window-buffer window buffer)
+    window))
+
+(defun my/compilation-split-horizontally ()
+  "Always split the window horizontally for the *compilation* buffer."
+  (add-to-list 'display-buffer-alist
+               '("\\*compilation\\*"
+                 (my/display-buffer-horizontally))))
+
+;; Enable the custom behavior
+(my/compilation-split-horizontally)
