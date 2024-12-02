@@ -1,5 +1,4 @@
 from amplpy import AMPL
-import os
 
 def convert_to_sparse(model_file, data_file, matrix_parameters, output_file):
     """
@@ -15,39 +14,40 @@ def convert_to_sparse(model_file, data_file, matrix_parameters, output_file):
     
     # Load the model and data
     ampl.read(model_file)
-    ampl.read_data(data_file)
+    ampl.readData(data_file)  # Corrected method name
     
     # Process each matrix parameter
     for param_name in matrix_parameters:
         # Get the full matrix parameter
-        param = ampl.get_parameter(param_name)
-        data = param.get_values().to_list()  # Convert to a list of tuples [(index1, index2, value), ...]
+        param = ampl.getParameter(param_name)
+        data = param.getValues().toPandas()  # Convert to a Pandas DataFrame
         
-        # Create a sparse representation (excluding zero values)
-        sparse_data = [(i, j, v) for i, j, v in data if v != 0]
+        # Filter for non-zero values
+        sparse_data = data[data['value'] != 0]  # Keep only non-zero entries
+        sparse_indices = sparse_data[['index1', 'index2']].to_records(index=False).tolist()
+        sparse_values = sparse_data['value'].tolist()
         
         # Define a set for the sparse parameter indices
         sparse_set_name = f"{param_name}_indices"
         ampl.eval(f"set {sparse_set_name} within {{i, j}};")
         
         # Populate the set with valid indices
-        sparse_indices = [(i, j) for i, j, _ in sparse_data]
-        sparse_set = ampl.get_set(sparse_set_name)
-        sparse_set.set_values(sparse_indices)
+        sparse_set = ampl.getSet(sparse_set_name)
+        sparse_set.setValues(sparse_indices)
         
         # Define the sparse parameter with the new domain set
         sparse_param_name = f"{param_name}_sparse"
         ampl.eval(f"param {sparse_param_name} {{({sparse_set_name})}};")
         
-        # Set the values for the sparse parameter
-        sparse_param = ampl.get_parameter(sparse_param_name)
-        sparse_param.set_values(sparse_data)
+        # Populate the sparse parameter with its values
+        sparse_param = ampl.getParameter(sparse_param_name)
+        sparse_param.setValues({tuple(idx): val for idx, val in zip(sparse_indices, sparse_values)})
         
         # Optionally remove the original parameter if no longer needed
         # ampl.eval(f"drop param {param_name};")
         
     # Write the updated data to a file
-    ampl.write_data(output_file)
+    ampl.writeData(output_file)  # Corrected method name
 
     print(f"Updated data with sparse parameters and domain sets saved to {output_file}")
 
