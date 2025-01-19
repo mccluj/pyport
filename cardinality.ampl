@@ -26,3 +26,29 @@ subject to CardinalityConstraint:
 # Budget constraint
 subject to Budget:
     sum {i in ASSETS} x[i] = 1;
+
+data;
+set ASSETS := A1 A2 A3 A4;
+
+# Expected returns for each asset
+param returns :=
+  A1 0.12
+  A2 0.10
+  A3 0.08
+  A4 0.07;
+
+# Covariance matrix for asset returns (symmetric)
+param cov (tr):
+       A1      A2      A3      A4 :=
+  A1   0.10    0.02    0.01    0.03
+  A2   0.02    0.08    0.01    0.02
+  A3   0.01    0.01    0.05    0.01
+  A4   0.03    0.02    0.01    0.07;
+
+# Maximum allowable risk (variance)
+param risk_limit := 0.04;
+
+# Cardinality constraint approximation parameter
+param C := 0.8;
+
+# Budget constraint is implicit in the model (sum of x[i] = 1)
