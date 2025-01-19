@@ -1,54 +1,77 @@
+# ======================================================
+# mvo_cardinality.mod
+# Mean-Variance Optimization with Quadratic Cardinality Penalty
+# ======================================================
+
+reset;
+
+########################################################
+# 1. MODEL DECLARATIONS
+########################################################
 set ASSETS;
-param C;  # Maximum "sparsity" (approximate cardinality)
-param returns {ASSETS};  # Expected returns
-param cov {ASSETS, ASSETS};  # Covariance matrix for risk
-param risk_limit;  # Maximum allowable risk
 
-var x {ASSETS} >= 0;  # Fraction of portfolio allocated to each asset
-var s {ASSETS} >= 0;  # Slack variables to approximate sparsity
+param mu {ASSETS};          # expected returns
+param Sigma {ASSETS,ASSETS};# covariance matrix
+param lambda >= 0, <= 1;    # risk aversion parameter
+param gamma >= 0;           # penalty weight for cardinality approximation
+param epsilon >= 0;         # small constant inside sqrt
+param budget;               # sum of weights constraint
 
-# Objective: Maximize expected return (modify if needed)
-maximize TotalReturn:
-    sum {i in ASSETS} returns[i] * x[i];
+var x {i in ASSETS} >= 0;   # portfolio weights (long-only in this example)
 
-# Risk constraint
-subject to RiskConstraint:
-    sum {i in ASSETS, j in ASSETS} cov[i,j] * x[i] * x[j] <= risk_limit;
+# ------------------------------------------------------
+# 1.1 Objective Function:
+#     Minimize [ λ * (x'Σx)  - (1 - λ)* (μ'x)  + γ * ∑ sqrt(ε + x_i^2 ) ]
+# ------------------------------------------------------
+minimize MVO_obj:
+      lambda * sum {i in ASSETS, j in ASSETS} (x[i] * Sigma[i,j] * x[j])
+    - (1 - lambda) * sum {i in ASSETS} (mu[i] * x[i])
+    + gamma * sum {i in ASSETS} sqrt(epsilon + x[i]^2);
 
-# Sparsity approximation: linking x[i] and s[i]
-subject to SparsityLinking {i in ASSETS}:
-    s[i] >= x[i];
+# ------------------------------------------------------
+# 1.2 Constraints
+# ------------------------------------------------------
+subject to budget_cons:
+    sum {i in ASSETS} x[i] = budget;
 
-# Cardinality approximation
-subject to CardinalityConstraint:
-    sum {i in ASSETS} s[i] <= C;
-
-# Budget constraint
-subject to Budget:
-    sum {i in ASSETS} x[i] = 1;
-
+########################################################
+# 2. DATA SECTION
+########################################################
 data;
-set ASSETS := A1 A2 A3 A4;
 
-# Expected returns for each asset
-param returns :=
-  A1 0.12
-  A2 0.10
-  A3 0.08
-  A4 0.07;
+set ASSETS := A B C D E;
 
-# Covariance matrix for asset returns (symmetric)
-param cov (tr):
-       A1      A2      A3      A4 :=
-  A1   0.10    0.02    0.01    0.03
-  A2   0.02    0.08    0.01    0.02
-  A3   0.01    0.01    0.05    0.01
-  A4   0.03    0.02    0.01    0.07;
+# Synthetic expected returns
+param mu :=
+  A  0.12
+  B  0.09
+  C  0.15
+  D  0.07
+  E  0.11
+;
 
-# Maximum allowable risk (variance)
-param risk_limit := 0.04;
+# Covariance matrix (assumed symmetric, so we use "tr" format)
+param Sigma (tr):
+      A      B      C      D      E :=
+A     0.04   0.006  0.001  0.000  0.000
+B            0.05   0.002  0.000  0.000
+C                   0.06   0.000  0.000
+D                          0.03   0.000
+E                                 0.04
+;
 
-# Cardinality constraint approximation parameter
-param C := 0.8;
+# Model parameters
+param lambda   := 0.5;     # medium risk aversion
+param gamma    := 2.0;     # cardinality penalty weight
+param epsilon  := 1e-4;    # small constant for sqrt
+param budget   := 1.0;
 
-# Budget constraint is implicit in the model (sum of x[i] = 1)
+########################################################
+# 3. SOLVE
+########################################################
+option solver cplex;  # or another solver that supports quadratic models
+solve;
+
+# 4. REPORT RESULTS
+display x;
+display sum{i in ASSETS} (abs(x[i]) > 1e-6);  # approximate "active" positions
