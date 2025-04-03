@@ -1,5 +1,0 @@
-ampl
-model portfolio.mod;
-data portfolio.dat;
-solve;
-display long_hold, short_hold, net_hold, long_indicator;
