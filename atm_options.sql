@@ -1,28 +1,35 @@
--- Replace with your actual securityid
+-- Set first day of week to Monday so DATEPART(WEEKDAY, ...) aligns with 1 = Monday, 5 = Friday
+SET DATEFIRST 1;
+
 DECLARE @securityid VARCHAR(20) = 'ABC123';
 
--- STEP 1: Get all 3rd Fridays based on months where options exist
-WITH ThirdFridays AS (
-    SELECT 
-        DATEADD(DAY, ((15 - DATEPART(WEEKDAY, DATEFROMPARTS(YEAR(date), MONTH(date), 1)) + 5) % 7) + 14,
-                DATEFROMPARTS(YEAR(date), MONTH(date), 1)) AS third_friday
-    FROM (
-        SELECT DISTINCT date
-        FROM option_price
-        WHERE securityid = @securityid
-    ) AS option_months
+-- STEP 1: Get all trading days for the security
+WITH TradingDays AS (
+    SELECT DISTINCT date
+    FROM security_price
+    WHERE securityid = @securityid
 ),
--- STEP 2: Adjust 3rd Friday to the previous trading day (based on security_price)
+
+-- STEP 2: Identify 3rd Fridays (weekday = 5 [Friday] and day between 15 and 21)
+ThirdFridays AS (
+    SELECT date AS third_friday
+    FROM TradingDays
+    WHERE 
+        DATEPART(WEEKDAY, date) = 5
+        AND DAY(date) BETWEEN 15 AND 21
+),
+
+-- STEP 3: Adjust to latest available trading day before third_friday (if it's not a trading day)
 AdjustedTradingDates AS (
     SELECT 
         tf.third_friday,
-        MAX(sp.date) AS trade_date
+        MAX(td.date) AS trade_date
     FROM ThirdFridays tf
-    JOIN security_price sp 
-        ON sp.securityid = @securityid AND sp.date <= tf.third_friday
+    JOIN TradingDays td ON td.date <= tf.third_friday
     GROUP BY tf.third_friday
 ),
--- STEP 3: Build trade_date → expiration_date pairs
+
+-- STEP 4: Enumerate and pair with next expiration
 CalendarWithNextDate AS (
     SELECT 
         ROW_NUMBER() OVER (ORDER BY trade_date) AS seq,
@@ -36,7 +43,8 @@ TradePairs AS (
     FROM CalendarWithNextDate curr
     JOIN CalendarWithNextDate nxt ON nxt.seq = curr.seq + 1
 ),
--- STEP 4: Join to get closeprice and option data
+
+-- STEP 5: Join with security price and option table to get option details
 OptionCandidates AS (
     SELECT 
         tp.trade_date,
@@ -57,13 +65,15 @@ OptionCandidates AS (
            AND op.callput = 'C'
     WHERE op.strike >= sp.closeprice
 ),
--- STEP 5: Rank by nearest OTM and select best
+
+-- STEP 6: Rank options by how close they are to the underlying close price
 RankedOptions AS (
     SELECT *,
         ROW_NUMBER() OVER (PARTITION BY trade_date ORDER BY moneyness_diff ASC) AS rn
     FROM OptionCandidates
 )
--- FINAL SELECT: One option per trade_date
+
+-- FINAL SELECT: One OTM call option per trade date
 SELECT 
     securityid,
     trade_date,
