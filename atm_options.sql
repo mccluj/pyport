@@ -1,70 +1,77 @@
+-- Replace with your actual securityid
+DECLARE @securityid VARCHAR(20) = 'ABC123';
+
+-- STEP 1: Get all 3rd Fridays based on months where options exist
 WITH ThirdFridays AS (
-    SELECT DISTINCT date
-    FROM SecurityPrices
-    WHERE 
-        DAY(date) BETWEEN 15 AND 21
-        AND DATEPART(WEEKDAY, date) = 6 -- Friday
-),
-CurrentDates AS (
-    -- For each expected 3rd Friday, find the most recent available trading day in SecurityPrices
-    SELECT TF.date AS NominalDate,
-           SP.date AS CurrentDate
-    FROM ThirdFridays TF
-    OUTER APPLY (
-        SELECT TOP 1 date
-        FROM SecurityPrices
-        WHERE date <= TF.date
-        ORDER BY date DESC
-    ) SP
-),
-NextThirdFridays AS (
-    -- Pair each current date with the next 3rd Friday
     SELECT 
-        CD.CurrentDate,
-        MIN(NTF.date) AS NextNominalExpiration
-    FROM CurrentDates CD
-    JOIN ThirdFridays NTF ON NTF.date > CD.NominalDate
-    GROUP BY CD.CurrentDate
+        DATEADD(DAY, ((15 - DATEPART(WEEKDAY, DATEFROMPARTS(YEAR(date), MONTH(date), 1)) + 5) % 7) + 14,
+                DATEFROMPARTS(YEAR(date), MONTH(date), 1)) AS third_friday
+    FROM (
+        SELECT DISTINCT date
+        FROM option_price
+        WHERE securityid = @securityid
+    ) AS option_months
 ),
-AdjustedExpirations AS (
-    -- Find the closest available expiration for each "Next 3rd Friday"
+-- STEP 2: Adjust 3rd Friday to the previous trading day (based on security_price)
+AdjustedTradingDates AS (
     SELECT 
-        NTF.CurrentDate,
-        OP.date AS CurrentOptionDate,
-        OP.expiration AS ExpirationDate
-    FROM NextThirdFridays NTF
-    OUTER APPLY (
-        SELECT TOP 1 expiration, date
-        FROM OptionPrices
-        WHERE expiration <= NTF.NextNominalExpiration
-          AND date = NTF.CurrentDate
-        ORDER BY expiration DESC
-    ) OP
+        tf.third_friday,
+        MAX(sp.date) AS trade_date
+    FROM ThirdFridays tf
+    JOIN security_price sp 
+        ON sp.securityid = @securityid AND sp.date <= tf.third_friday
+    GROUP BY tf.third_friday
 ),
-ATMOptions AS (
+-- STEP 3: Build trade_date → expiration_date pairs
+CalendarWithNextDate AS (
     SELECT 
-        AE.CurrentDate,
-        AE.ExpirationDate,
-        SP.SecurityID,
-        SP.ClosePrice,
-        OP.strike,
-        OP.OptionPrice,
-        OP.callput
-    FROM AdjustedExpirations AE
-    JOIN SecurityPrices SP ON SP.date = AE.CurrentDate
-    JOIN OptionPrices OP
-        ON OP.date = AE.CurrentDate
-        AND OP.expiration = AE.ExpirationDate
-        AND OP.SecurityID = SP.SecurityID
-        AND OP.callput = 'C'
-    WHERE OP.strike >= SP.ClosePrice
-)
--- Final: Pick closest ATM/OTM call
-SELECT *
-FROM (
+        ROW_NUMBER() OVER (ORDER BY trade_date) AS seq,
+        trade_date
+    FROM AdjustedTradingDates
+),
+TradePairs AS (
+    SELECT 
+        curr.trade_date,
+        nxt.trade_date AS expiration
+    FROM CalendarWithNextDate curr
+    JOIN CalendarWithNextDate nxt ON nxt.seq = curr.seq + 1
+),
+-- STEP 4: Join to get closeprice and option data
+OptionCandidates AS (
+    SELECT 
+        tp.trade_date,
+        tp.expiration,
+        sp.closeprice,
+        op.securityid,
+        op.strike,
+        op.bestbid,
+        op.bestoffer,
+        ABS(op.strike - sp.closeprice) AS moneyness_diff
+    FROM TradePairs tp
+    JOIN security_price sp 
+        ON sp.securityid = @securityid AND sp.date = tp.trade_date
+    JOIN option_price op 
+        ON op.securityid = @securityid 
+           AND op.date = tp.trade_date 
+           AND op.expiration = tp.expiration 
+           AND op.callput = 'C'
+    WHERE op.strike >= sp.closeprice
+),
+-- STEP 5: Rank by nearest OTM and select best
+RankedOptions AS (
     SELECT *,
-           ROW_NUMBER() OVER (PARTITION BY CurrentDate ORDER BY strike ASC) AS rn
-    FROM ATMOptions
-) Ranked
+        ROW_NUMBER() OVER (PARTITION BY trade_date ORDER BY moneyness_diff ASC) AS rn
+    FROM OptionCandidates
+)
+-- FINAL SELECT: One option per trade_date
+SELECT 
+    securityid,
+    trade_date,
+    expiration,
+    closeprice,
+    strike,
+    bestbid,
+    bestoffer
+FROM RankedOptions
 WHERE rn = 1
-ORDER BY CurrentDate;
+ORDER BY trade_date;
