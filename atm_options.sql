@@ -1,49 +1,52 @@
-SET DATEFIRST 1;
+SET DATEFIRST 1;  -- Monday = 1, so Friday = 5
 
 DECLARE @securityid VARCHAR(20) = 'ABC123';
 
--- Step 1: Get calendar-based 3rd Fridays (not yet validated as trading days)
-WITH CalendarDates AS (
-    SELECT DISTINCT DATEFROMPARTS(YEAR(date), MONTH(date), 1) AS first_of_month
-    FROM option_price
+-- Step 1: Get all valid trading days for this security
+WITH TradingDays AS (
+    SELECT DISTINCT date
+    FROM security_price
     WHERE securityid = @securityid
 ),
+
+-- Step 2: Select valid 3rd Fridays from existing trading days (no calendar math)
 ThirdFridays AS (
-    SELECT 
-        DATEADD(DAY,
-            CASE 
-                WHEN DATEPART(WEEKDAY, DATEFROMPARTS(YEAR(first_of_month), MONTH(first_of_month), 15)) <= 5
-                    THEN 5 - DATEPART(WEEKDAY, DATEFROMPARTS(YEAR(first_of_month), MONTH(first_of_month), 15))
-                ELSE 12 - DATEPART(WEEKDAY, DATEFROMPARTS(YEAR(first_of_month), MONTH(first_of_month), 15))
-            END,
-            DATEFROMPARTS(YEAR(first_of_month), MONTH(first_of_month), 15)
-        ) AS target_3rd_friday
-    FROM CalendarDates
+    SELECT date AS target_3rd_friday
+    FROM TradingDays
+    WHERE 
+        DATEPART(WEEKDAY, date) = 5 AND
+        DAY(date) BETWEEN 15 AND 21
 ),
--- Step 2: Turn target 3rd Fridays into real trading dates via MAX(date) ≤ target
+
+-- Step 3: For each target 3rd Friday, find the most recent valid trading day <= it
 AdjustedTradeCalendar AS (
     SELECT 
         tf.target_3rd_friday,
-        (SELECT MAX(date) FROM security_price 
-         WHERE date <= tf.target_3rd_friday AND securityid = @securityid) AS trade_date
+        (SELECT MAX(date)
+         FROM TradingDays
+         WHERE date <= tf.target_3rd_friday) AS trade_date
     FROM ThirdFridays tf
 ),
--- Step 3: Pair each trade_date with the next adjusted expiration date
+
+-- Step 4: Pair each trade_date with the next trade_date (to be used as expiration target)
 CalendarWithSeq AS (
     SELECT 
         ROW_NUMBER() OVER (ORDER BY trade_date) AS seq,
         trade_date
     FROM AdjustedTradeCalendar
 ),
+
 TradeAndExpiration AS (
     SELECT 
         curr.trade_date,
-        (SELECT MAX(date) FROM security_price 
-         WHERE date <= next.trade_date AND securityid = @securityid) AS expiration
+        (SELECT MAX(date)
+         FROM TradingDays
+         WHERE date <= next.trade_date) AS expiration
     FROM CalendarWithSeq curr
     JOIN CalendarWithSeq next ON next.seq = curr.seq + 1
 ),
--- Step 4: Join with option and price data
+
+-- Step 5: Join with prices and options
 OptionCandidates AS (
     SELECT 
         te.trade_date,
@@ -64,7 +67,8 @@ OptionCandidates AS (
            AND op.callput = 'C'
     WHERE op.strike >= sp.closeprice
 ),
--- Step 5: Select nearest OTM call
+
+-- Step 6: Pick nearest OTM call
 RankedOptions AS (
     SELECT *,
            ROW_NUMBER() OVER (PARTITION BY trade_date ORDER BY moneyness_diff ASC) AS rn
