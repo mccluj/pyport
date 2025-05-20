@@ -1,0 +1,45 @@
+Function BSPrice(S As Double, K As Double, OptionType As String, T As Double, _
+                 Sigma As Double, R As Double, Q As Double) As Double
+
+    Dim d1 As Double, d2 As Double
+    d1 = (Log(S / K) + (R - Q + 0.5 * Sigma ^ 2) * T) / (Sigma * Sqr(T))
+    d2 = d1 - Sigma * Sqr(T)
+
+    If LCase(OptionType) = "call" Then
+        BSPrice = S * Exp(-Q * T) * WorksheetFunction.NormSDist(d1) - _
+                  K * Exp(-R * T) * WorksheetFunction.NormSDist(d2)
+    ElseIf LCase(OptionType) = "put" Then
+        BSPrice = K * Exp(-R * T) * WorksheetFunction.NormSDist(-d2) - _
+                  S * Exp(-Q * T) * WorksheetFunction.NormSDist(-d1)
+    Else
+        BSPrice = CVErr(xlErrValue)
+    End If
+End Function
+
+
+Function BSDelta(S As Double, K As Double, OptionType As String, T As Double, _
+                 Sigma As Double, R As Double, Q As Double) As Double
+
+    Dim d1 As Double
+    d1 = (Log(S / K) + (R - Q + 0.5 * Sigma ^ 2) * T) / (Sigma * Sqr(T))
+
+    If LCase(OptionType) = "call" Then
+        BSDelta = Exp(-Q * T) * WorksheetFunction.NormSDist(d1)
+    ElseIf LCase(OptionType) = "put" Then
+        BSDelta = -Exp(-Q * T) * WorksheetFunction.NormSDist(-d1)
+    Else
+        BSDelta = CVErr(xlErrValue)
+    End If
+End Function
+
+
+Function ForwardPrice(S As Double, T As Double, R As Double, Q As Double) As Double
+    ForwardPrice = S * Exp((R - Q) * T)
+End Function
+
+Function ForwardValue(S As Double, T As Double, R As Double, Q As Double) As Double
+    Dim F As Double
+    F = S * Exp((R - Q) * T)
+    ForwardValue = F * Exp(-R * T) - S
+End Function
+
