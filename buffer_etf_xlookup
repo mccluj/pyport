@@ -1,0 +1,9 @@
+=BSPrice(
+    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Spot]),
+    [@Strike],
+    [@Type],
+    [@Time],
+    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Sigma]),
+    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Rate]),
+    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Dividend])
+)
