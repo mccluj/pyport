@@ -1,9 +1,10 @@
 =BSPrice(
-    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Spot]),
-    [@Strike],
-    [@Type],
-    [@Time],
-    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Sigma]),
-    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Rate]),
-    XLOOKUP([@ScenarioID], MarketScenarios[ScenarioID], MarketScenarios[Dividend])
+  INDEX(MarketScenarios[Spot], MATCH([@ScenarioID], MarketScenarios[ScenarioID], 0)),
+  [@Strike],
+  [@Type],
+  [@Time],
+  INDEX(MarketScenarios[Sigma], MATCH([@ScenarioID], MarketScenarios[ScenarioID], 0)),
+  INDEX(MarketScenarios[Rate], MATCH([@ScenarioID], MarketScenarios[ScenarioID], 0)),
+  INDEX(MarketScenarios[Dividend], MATCH([@ScenarioID], MarketScenarios[ScenarioID], 0))
 )
+
