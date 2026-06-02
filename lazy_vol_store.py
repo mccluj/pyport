@@ -1,61 +1,43 @@
-import numpy as np
+from collections import OrderedDict
 import pandas as pd
-from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
 
 
-class VolSurfaceInterpolator:
-    def __init__(self, df: pd.DataFrame):
-        self.surfaces = {}
+class LazyVolStore:
+    def __init__(self, df: pd.DataFrame, max_cache_size: int | None = None):
+        self.df = df.copy()
+        self.df["date"] = pd.to_datetime(self.df["date"])
 
-        required = {
-            "date", "ticker", "option_type",
-            "days", "moneyness", "volatility"
-        }
-        missing = required - set(df.columns)
-        if missing:
-            raise ValueError(f"Missing columns: {missing}")
+        self.df = self.df.set_index(["date", "ticker", "option_type"]).sort_index()
 
-        df = df.copy()
-        df["date"] = pd.to_datetime(df["date"])
+        self.cache = OrderedDict()
+        self.max_cache_size = max_cache_size
 
-        keys = ["date", "ticker", "option_type"]
-
-        for key, g in df.groupby(keys, sort=False):
-            points = g[["days", "moneyness"]].to_numpy(float)
-            values = g["volatility"].to_numpy(float)
-
-            if len(g) < 3:
-                continue
-
-            self.surfaces[key] = {
-                "linear": LinearNDInterpolator(points, values),
-                "nearest": NearestNDInterpolator(points, values),
-            }
-
-    def get_vol(
-        self,
-        date,
-        ticker: str,
-        option_type: str,
-        days: float,
-        moneyness: float,
-        fallback: str = "nearest",
-    ) -> float:
+    def get_vol(self, date, ticker, option_type, days, moneyness) -> float:
         key = (pd.Timestamp(date), ticker, option_type)
 
-        if key not in self.surfaces:
-            raise KeyError(f"No surface for {key}")
+        surface = self._get_surface(key)
 
-        surf = self.surfaces[key]
-        vol = surf["linear"](days, moneyness)
+        return surface.interpolate(days, moneyness)
 
-        if np.isnan(vol):
-            if fallback == "nearest":
-                vol = surf["nearest"](days, moneyness)
-            else:
-                raise ValueError(
-                    f"Point outside interpolation hull: "
-                    f"days={days}, moneyness={moneyness}"
-                )
+    def _get_surface(self, key):
+        if key in self.cache:
+            self.cache.move_to_end(key)
+            return self.cache[key]
 
-        return float(vol)
+        surface = self._build_surface(key)
+
+        self.cache[key] = surface
+        self.cache.move_to_end(key)
+
+        if self.max_cache_size is not None and len(self.cache) > self.max_cache_size:
+            self.cache.popitem(last=False)
+
+        return surface
+
+    def _build_surface(self, key):
+        try:
+            g = self.df.loc[key]
+        except KeyError:
+            raise KeyError(f"No volatility surface for {key}")
+
+        return VolSurface.from_frame(g)
