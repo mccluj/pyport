@@ -1,22 +1,51 @@
-from collections import OrderedDict
+import numpy as np
 import pandas as pd
+from collections import OrderedDict
+from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
+
+
+class VolSurface:
+    def __init__(self, points: np.ndarray, vols: np.ndarray):
+        self.linear = LinearNDInterpolator(points, vols)
+        self.nearest = NearestNDInterpolator(points, vols)
+
+    @classmethod
+    def from_frame(cls, g: pd.DataFrame):
+        points = g[["days", "moneyness"]].to_numpy(float)
+        vols = g["volatility"].to_numpy(float)
+        return cls(points, vols)
+
+    def interpolate(self, days: float, moneyness: float) -> float:
+        vol = self.linear(days, moneyness)
+
+        if np.isnan(vol):
+            vol = self.nearest(days, moneyness)
+
+        return float(vol)
 
 
 class LazyVolStore:
     def __init__(self, df: pd.DataFrame, max_cache_size: int | None = None):
-        self.df = df.copy()
-        self.df["date"] = pd.to_datetime(self.df["date"])
+        df = df.copy()
+        df["date"] = pd.to_datetime(df["date"])
 
-        self.df = self.df.set_index(["date", "ticker", "option_type"]).sort_index()
+        self.df = df.set_index(
+            ["date", "ticker", "option_type"]
+        ).sort_index()
 
         self.cache = OrderedDict()
         self.max_cache_size = max_cache_size
 
-    def get_vol(self, date, ticker, option_type, days, moneyness) -> float:
+    def get_vol(
+        self,
+        date,
+        ticker: str,
+        option_type: str,
+        days: float,
+        moneyness: float,
+    ) -> float:
         key = (pd.Timestamp(date), ticker, option_type)
-
         surface = self._get_surface(key)
-
         return surface.interpolate(days, moneyness)
 
     def _get_surface(self, key):
@@ -24,7 +53,12 @@ class LazyVolStore:
             self.cache.move_to_end(key)
             return self.cache[key]
 
-        surface = self._build_surface(key)
+        try:
+            g = self.df.loc[key]
+        except KeyError as exc:
+            raise KeyError(f"No vol surface for {key}") from exc
+
+        surface = VolSurface.from_frame(g)
 
         self.cache[key] = surface
         self.cache.move_to_end(key)
@@ -34,10 +68,5 @@ class LazyVolStore:
 
         return surface
 
-    def _build_surface(self, key):
-        try:
-            g = self.df.loc[key]
-        except KeyError:
-            raise KeyError(f"No volatility surface for {key}")
-
-        return VolSurface.from_frame(g)
+    def clear_cache(self):
+        self.cache.clear()
